@@ -117,7 +117,7 @@ function SearchBox({onSearch,onDupe,large,placeholder}){
 // ═══════════════════════════════════════
 function Nav({pg,nav,onSearch,onDupe}){
   const[mob,setMob]=useState(false);
-  const lk=[{l:'Home',p:'home'},{l:'Rankings',p:'rank'},{l:'Search',p:'search'},{l:'About',p:'about'}];
+  const lk=[{l:'Home',p:'home'},{l:'Rankings',p:'rank'},{l:'Discover',p:'search'},{l:'Build',p:'calc'},{l:'Blog',p:'blog'},{l:'About',p:'about'}];
   return(
     <nav style={{position:'sticky',top:0,zIndex:100,borderBottom:'1px solid var(--bd)',background:'rgba(9,9,11,0.9)',backdropFilter:'blur(20px)'}}>
       <div style={{maxWidth:1100,margin:'0 auto',padding:'11px 20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -169,13 +169,23 @@ function Block({item,onDupe}){
       onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(0,168,255,0.1)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--bd)'}>
       
       {/* ORIGINAL */}
-      <div style={{padding:'22px 24px 18px',textAlign:'center',borderBottom:'1px solid var(--bd)'}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:4}}>
+      <div style={{padding:'22px 24px 18px',textAlign:'center',borderBottom:'1px solid var(--bd)',position:'relative',overflow:'hidden'}}>
+        {/* Subtle gradient accent based on family */}
+        <div style={{position:'absolute',top:-40,right:-40,width:120,height:120,borderRadius:'50%',background:item.fam.includes('Woody')||item.fam.includes('Oud')||item.fam.includes('Leather')?'radial-gradient(circle,rgba(139,90,43,0.06),transparent)':item.fam.includes('Fresh')||item.fam.includes('Aquatic')||item.fam.includes('Citrus')||item.fam.includes('Aromatic')||item.fam.includes('Fougere')?'radial-gradient(circle,rgba(52,211,153,0.06),transparent)':item.fam.includes('Gourmand')||item.fam.includes('Vanilla')||item.fam.includes('Fruity')?'radial-gradient(circle,rgba(251,191,36,0.06),transparent)':'radial-gradient(circle,rgba(0,168,255,0.06),transparent)',pointerEvents:'none'}}/>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:4,position:'relative'}}>
           <span className="m" style={{fontSize:10,color:'var(--t4)',fontWeight:600}}>#{item.r}</span>
           <span style={{fontSize:10,color:'var(--bl)',textTransform:'uppercase',letterSpacing:1.5,fontWeight:600}}>{item.h}</span>
         </div>
-        <h3 style={{fontFamily:'var(--fd)',fontSize:'clamp(20px,3vw,26px)',fontWeight:700}}>{item.og}</h3>
+        <h3 style={{fontFamily:'var(--fd)',fontSize:'clamp(20px,3vw,26px)',fontWeight:700,position:'relative'}}>{item.og}</h3>
         <span style={{fontSize:12,color:'var(--t4)'}}>{item.fam} · <span className="m" style={{color:'var(--rd)',fontWeight:600}}>${item.p}</span></span>
+        {/* Top 3 notes as visual chips */}
+        <div style={{display:'flex',justifyContent:'center',gap:6,marginTop:8,flexWrap:'wrap'}}>
+          {[...item.notes.t.slice(0,2),...item.notes.m.slice(0,1)].map((n,i)=>(
+            <span key={i} style={{fontSize:10,padding:'3px 10px',borderRadius:12,background:'rgba(255,255,255,0.03)',border:'1px solid var(--bd)',color:'var(--t2)',display:'flex',alignItems:'center',gap:4}}>
+              <span style={{width:5,height:5,borderRadius:'50%',background:i===0?'var(--bl)':i===1?'var(--gn)':'var(--yl)'}}></span>{n}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* CLONES */}
@@ -226,16 +236,27 @@ function Block({item,onDupe}){
 function RankPage({onDupe}){
   const[fl,setFl]=useState('all');
   const[sort,setSort]=useState('popular');
-  const fams=['all',...[...new Set(DB.map(d=>d.fam))].sort()];
   const sorts=[{k:'popular',l:'Most Popular'},{k:'alpha',l:'A → Z'},{k:'price',l:'Highest Retail'},{k:'bestclone',l:'Best Clone Score'},{k:'savings',l:'Biggest Savings'}];
+  const cats=[{k:'all',l:'All'},{k:'woody',l:'Woody'},{k:'oriental',l:'Oriental'},{k:'fresh',l:'Fresh'},{k:'gourmand',l:'Gourmand'},{k:'floral',l:'Floral'}];
+  
+  const matchCat=(fam,cat)=>{
+    if(cat==='all')return true;
+    const f=fam.toLowerCase();
+    if(cat==='woody')return f.includes('woody')||f.includes('oud')||f.includes('leather')||f.includes('chypre');
+    if(cat==='oriental')return f.includes('oriental')||f.includes('amber')||f.includes('spicy');
+    if(cat==='fresh')return f.includes('fresh')||f.includes('aquatic')||f.includes('citrus')||f.includes('aromatic')||f.includes('fougere')||f.includes('green');
+    if(cat==='gourmand')return f.includes('gourmand')||f.includes('vanilla')||f.includes('fruity')||f.includes('almond')||f.includes('tobacco');
+    if(cat==='floral')return f.includes('floral');
+    return false;
+  };
   
   const data=useMemo(()=>{
-    let d=fl==='all'?[...DB]:DB.filter(x=>x.fam===fl);
+    let d=fl==='all'?[...DB]:DB.filter(x=>matchCat(x.fam,fl));
     switch(sort){
       case'alpha':d.sort((a,b)=>a.og.localeCompare(b.og));break;
       case'price':d.sort((a,b)=>b.p-a.p);break;
       case'bestclone':d.sort((a,b)=>Math.max(...b.dupes.map(x=>sc(x)))-Math.max(...a.dupes.map(x=>sc(x))));break;
-      case'savings':d.sort((a,b)=>{const sa=Math.min(...a.dupes.map(x=>x.pr));const sb=Math.min(...b.dupes.map(x=>x.pr));return(sb/b.p)-(sa/a.p);});break;
+      case'savings':d.sort((a,b)=>{const sa=Math.min(...a.dupes.map(x=>x.pr));const sb=Math.min(...b.dupes.map(x=>x.pr));return(sa/a.p)-(sb/b.p);});break;
       default:d.sort((a,b)=>a.r-b.r);
     }
     return d;
@@ -251,10 +272,9 @@ function RankPage({onDupe}){
         {sorts.map(s=><button key={s.k} onClick={()=>setSort(s.k)} style={{fontSize:11,padding:'7px 14px',borderRadius:8,border:'1px solid',borderColor:sort===s.k?'var(--bl)':'var(--bd)',background:sort===s.k?'var(--bld)':'transparent',color:sort===s.k?'var(--bl)':'var(--t3)',whiteSpace:'nowrap',fontWeight:sort===s.k?600:400,transition:'all .2s'}}>{s.l}</button>)}
       </div>
 
-      {/* FAMILY FILTER */}
-      <div style={{display:'flex',flexWrap:'wrap',gap:4,marginBottom:24}}>
-        <span style={{fontSize:10,color:'var(--t4)',alignSelf:'center',marginRight:4}}>Family:</span>
-        {fams.map(f=><button key={f} onClick={()=>setFl(f)} style={{fontSize:9,padding:'4px 10px',borderRadius:5,border:'1px solid',borderColor:fl===f?'rgba(52,211,153,0.3)':'var(--bd)',background:fl===f?'rgba(52,211,153,0.08)':'transparent',color:fl===f?'var(--gn)':'var(--t4)',textTransform:'capitalize'}}>{f==='all'?'All Families':f}</button>)}
+      {/* SCENT TYPE FILTER */}
+      <div style={{display:'flex',gap:6,marginBottom:24,overflowX:'auto',paddingBottom:4}}>
+        {cats.map(c=><button key={c.k} onClick={()=>setFl(c.k)} style={{fontSize:11,padding:'7px 14px',borderRadius:8,border:'1px solid',borderColor:fl===c.k?'rgba(52,211,153,0.3)':'var(--bd)',background:fl===c.k?'rgba(52,211,153,0.08)':'transparent',color:fl===c.k?'var(--gn)':'var(--t3)',whiteSpace:'nowrap',fontWeight:fl===c.k?600:400,transition:'all .2s'}}>{c.l}</button>)}
       </div>
 
       {data.map(i=><Block key={i.id} item={i} onDupe={onDupe}/>)}
@@ -263,98 +283,151 @@ function RankPage({onDupe}){
 }
 
 // ═══════════════════════════════════════
-// SEARCH PAGE — clean, search-focused
+// SEARCH PAGE — discovery-focused
 // ═══════════════════════════════════════
 function SearchPg({iq,onSearch,onDupe}){
   const[q,setQ]=useState(iq||'');
+  const[browse,setBrowse]=useState(null); // {type:'brand'|'family', value:'Lattafa'}
   useEffect(()=>{setQ(iq||'');},[iq]);
   const res=useMemo(()=>q?searchDB(q):[],[q]);
   
-  // Stats for the info section
+  // Browse mode results
+  const browseRes=useMemo(()=>{
+    if(!browse)return[];
+    if(browse.type==='brand')return DB.filter(i=>i.dupes.some(d=>d.br===browse.value));
+    if(browse.type==='family')return DB.filter(i=>i.fam===browse.value);
+    return[];
+  },[browse]);
+  
   const totalClones=DB.reduce((a,i)=>a+i.dupes.length,0);
   const avgSavings=Math.round(DB.reduce((a,i)=>a+i.dupes.reduce((b,d)=>b+sv(i.p,d.pr),0)/i.dupes.length,0)/DB.length);
-  const topBrands=useMemo(()=>{const m={};DB.forEach(i=>i.dupes.forEach(d=>{m[d.br]=(m[d.br]||0)+1;}));return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);},[]);
-  const families=useMemo(()=>[...new Set(DB.map(d=>d.fam))].sort(),[]);
+  const topBrands=useMemo(()=>{const m={};DB.forEach(i=>i.dupes.forEach(d=>{m[d.br]=(m[d.br]||0)+1;}));return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,6);},[]);
+  // Simplified families — group into broader categories
+  const familyGroups=useMemo(()=>{
+    const groups={'Woody':[],'Oriental':[],'Fresh':[],'Floral':[],'Gourmand':[],'Other':[]};
+    DB.forEach(i=>{
+      const f=i.fam.toLowerCase();
+      if(f.includes('woody')||f.includes('oud')||f.includes('leather')||f.includes('chypre'))groups['Woody'].push(i.fam);
+      else if(f.includes('oriental')||f.includes('amber')||f.includes('spicy'))groups['Oriental'].push(i.fam);
+      else if(f.includes('fresh')||f.includes('aquatic')||f.includes('citrus')||f.includes('aromatic')||f.includes('fougere')||f.includes('green'))groups['Fresh'].push(i.fam);
+      else if(f.includes('floral'))groups['Floral'].push(i.fam);
+      else if(f.includes('gourmand')||f.includes('vanilla')||f.includes('fruity')||f.includes('almond')||f.includes('tobacco'))groups['Gourmand'].push(i.fam);
+      else groups['Other'].push(i.fam);
+    });
+    return Object.entries(groups).filter(([,v])=>v.length>0).map(([k,v])=>({name:k,count:[...new Set(v)].length,families:[...new Set(v)]}));
+  },[]);
 
+  // Clear browse and show search results
+  const doSearch=(v)=>{setBrowse(null);setQ(v);};
+
+  // Showing search results
+  if(q){
+    return(
+      <section style={{padding:'36px 20px 80px',maxWidth:1060,margin:'0 auto'}}>
+        <div style={{textAlign:'center',marginBottom:28}}>
+          <div style={{display:'flex',justifyContent:'center',marginBottom:8}}><SearchBox onSearch={doSearch} onDupe={onDupe} large placeholder="Fragrance, brand, or note..."/></div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
+          <button onClick={()=>{setQ('');setBrowse(null);}} style={{fontSize:12,color:'var(--bl)',display:'flex',alignItems:'center',gap:4}}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg> Clear
+          </button>
+          <p style={{fontSize:12,color:'var(--t4)'}}>{res.length} result{res.length!==1?'s':''} for "{q}"</p>
+        </div>
+        {res.length===0?<div style={{textAlign:'center',padding:60,color:'var(--t4)'}}>No results found. Try a different name or brand.</div>:
+          res.map(i=><Block key={i.id} item={i} onDupe={onDupe}/>)}
+      </section>
+    );
+  }
+
+  // Showing browse results
+  if(browse){
+    return(
+      <section style={{padding:'36px 20px 80px',maxWidth:1060,margin:'0 auto'}}>
+        <div style={{textAlign:'center',marginBottom:28}}>
+          <div style={{display:'flex',justifyContent:'center',marginBottom:8}}><SearchBox onSearch={doSearch} onDupe={onDupe} large placeholder="Fragrance, brand, or note..."/></div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
+          <button onClick={()=>setBrowse(null)} style={{fontSize:12,color:'var(--bl)',display:'flex',alignItems:'center',gap:4}}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg> Back to Discover
+          </button>
+          <p style={{fontSize:12,color:'var(--t4)'}}>{browseRes.length} cologne{browseRes.length!==1?'s':''} · {browse.type==='brand'?'Brand':'Family'}: {browse.value}</p>
+        </div>
+        {browseRes.map(i=><Block key={i.id} item={i} onDupe={onDupe}/>)}
+      </section>
+    );
+  }
+
+  // Default: discovery page
   return(
     <section style={{padding:'36px 20px 80px',maxWidth:900,margin:'0 auto'}}>
-      <div style={{textAlign:'center',marginBottom:36}}>
-        <h2 style={{fontFamily:'var(--fd)',fontSize:'clamp(24px,4vw,32px)',fontWeight:700,marginBottom:12}}>Search</h2>
-        <div style={{display:'flex',justifyContent:'center'}}><SearchBox onSearch={v=>setQ(v)} onDupe={onDupe} large placeholder="Fragrance, brand, or note..."/></div>
+      {/* Hero-style heading */}
+      <div style={{textAlign:'center',marginBottom:36,position:'relative'}}>
+        <div style={{position:'absolute',top:'30%',left:'50%',transform:'translate(-50%,-50%)',width:400,height:250,borderRadius:'50%',background:'radial-gradient(circle,rgba(0,168,255,0.04) 0%,transparent 70%)',pointerEvents:'none'}}/>
+        <h2 style={{fontFamily:'var(--fd)',fontSize:'clamp(28px,5vw,42px)',fontWeight:700,letterSpacing:-1.5,lineHeight:1,marginBottom:8,position:'relative'}}>
+          <span style={{background:'linear-gradient(135deg,#fff 40%,var(--bl))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>Discover your dupe.</span>
+        </h2>
+        <p style={{fontSize:14,color:'var(--t3)',marginBottom:20}}>Search by cologne, brand, or scent note</p>
+        <div style={{display:'flex',justifyContent:'center'}}><SearchBox onSearch={doSearch} onDupe={onDupe} large placeholder="Try 'Aventus', 'Lattafa', or 'Vanilla'..."/></div>
       </div>
 
-      {q?(
-        <div>
-          <p style={{fontSize:12,color:'var(--t4)',marginBottom:16}}>{res.length} result{res.length!==1?'s':''} for "{q}"</p>
-          {res.length===0?<div style={{textAlign:'center',padding:60,color:'var(--t4)'}}>No results found. Try a different fragrance name or brand.</div>:
-            res.map(i=><Block key={i.id} item={i} onDupe={onDupe}/>)}
+      {/* Quick Stats */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:32}}>
+        {[{n:DB.length,l:'Colognes'},{n:totalClones,l:'Clones Ranked'},{n:avgSavings+'%',l:'Avg. Savings'}].map((s,i)=>(
+          <div key={i} style={{background:'var(--c1)',borderRadius:10,border:'1px solid var(--bd)',padding:'14px 12px',textAlign:'center'}}>
+            <div className="m" style={{fontSize:22,fontWeight:700,color:'var(--bl)'}}>{s.n}</div>
+            <div style={{fontSize:9,color:'var(--t4)',textTransform:'uppercase',letterSpacing:.8}}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Browse by Brand */}
+      <div style={{marginBottom:28}}>
+        <h3 style={{fontFamily:'var(--fd)',fontSize:15,fontWeight:700,marginBottom:10}}>Popular Clone Brands</h3>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:8}}>
+          {topBrands.map(([br,ct])=>(
+            <button key={br} onClick={()=>setBrowse({type:'brand',value:br})} style={{padding:'12px',borderRadius:10,background:'var(--c1)',border:'1px solid var(--bd)',textAlign:'center',transition:'all .2s'}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--bh)';e.currentTarget.style.background='rgba(0,168,255,0.03)';}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--bd)';e.currentTarget.style.background='var(--c1)';}}>
+              <div style={{fontSize:14,fontWeight:600}}>{br}</div>
+              <div className="m" style={{fontSize:10,color:'var(--t4)',marginTop:2}}>{ct} clones</div>
+            </button>
+          ))}
         </div>
-      ):(
-        <div>
-          {/* QUICK STATS */}
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:12,marginBottom:32}}>
-            {[
-              {n:DB.length,l:'Colognes Tracked'},
-              {n:totalClones,l:'Clones Ranked'},
-              {n:avgSavings+'%',l:'Avg. Savings'},
-              {n:'4',l:'Score Categories'}
-            ].map((s,i)=>(
-              <div key={i} style={{background:'var(--c1)',borderRadius:12,border:'1px solid var(--bd)',padding:'16px 14px',textAlign:'center'}}>
-                <div className="m" style={{fontSize:24,fontWeight:700,color:'var(--bl)'}}>{s.n}</div>
-                <div style={{fontSize:10,color:'var(--t4)',textTransform:'uppercase',letterSpacing:.8,marginTop:2}}>{s.l}</div>
-              </div>
-            ))}
-          </div>
+      </div>
 
-          {/* BROWSE BY BRAND */}
-          <div style={{marginBottom:28}}>
-            <h3 style={{fontFamily:'var(--fd)',fontSize:16,fontWeight:700,marginBottom:12}}>Browse by Clone Brand</h3>
-            <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-              {topBrands.map(([br,ct])=>(
-                <button key={br} onClick={()=>setQ(br)} style={{fontSize:12,padding:'8px 14px',borderRadius:8,background:'var(--c1)',border:'1px solid var(--bd)',color:'var(--t2)',transition:'all .2s'}}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--bh)';e.currentTarget.style.color='#fff';}}
-                  onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--bd)';e.currentTarget.style.color='var(--t2)';}}>
-                  {br} <span className="m" style={{fontSize:10,color:'var(--t4)',marginLeft:4}}>{ct}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* BROWSE BY FAMILY */}
-          <div style={{marginBottom:28}}>
-            <h3 style={{fontFamily:'var(--fd)',fontSize:16,fontWeight:700,marginBottom:12}}>Browse by Scent Family</h3>
-            <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-              {families.map(f=>(
-                <button key={f} onClick={()=>setQ(f)} style={{fontSize:12,padding:'8px 14px',borderRadius:8,background:'var(--c1)',border:'1px solid var(--bd)',color:'var(--t2)',transition:'all .2s'}}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(52,211,153,0.3)';e.currentTarget.style.color='var(--gn)';}}
-                  onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--bd)';e.currentTarget.style.color='var(--t2)';}}>
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* HOW IT WORKS - quick explainer */}
-          <div style={{background:'var(--c1)',borderRadius:14,border:'1px solid var(--bd)',padding:20}}>
-            <h3 style={{fontFamily:'var(--fd)',fontSize:16,fontWeight:700,marginBottom:12}}>How ScentMetric Works</h3>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:14}}>
-              {[
-                {n:'1',t:'Community Data',d:'We aggregate reviews from Reddit, Fragrantica, and fragrance forums'},
-                {n:'2',t:'4-Metric Scoring',d:'Each clone scored on Similarity, Performance, Projection, and Longevity'},
-                {n:'3',t:'Transparent Sources',d:'Every score links back to the community data it came from'}
-              ].map((s,i)=>(
-                <div key={i} style={{display:'flex',gap:10}}>
-                  <div style={{width:28,height:28,borderRadius:7,background:'var(--bld)',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--bl)',fontSize:13,fontWeight:700,flexShrink:0}}>{s.n}</div>
-                  <div>
-                    <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>{s.t}</div>
-                    <div style={{fontSize:11,color:'var(--t3)',lineHeight:1.5}}>{s.d}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Browse by Scent Type — simplified groups */}
+      <div style={{marginBottom:28}}>
+        <h3 style={{fontFamily:'var(--fd)',fontSize:15,fontWeight:700,marginBottom:10}}>Scent Types</h3>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:8}}>
+          {familyGroups.map(g=>{
+            const icons={Woody:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="1.5"><path d="M12 22V8"/><path d="M5 12l7-8 7 8"/><path d="M8 16l4-5 4 5"/></svg>,
+              Oriental:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="1.5"><path d="M12 2c0 4-4 6-4 10a4 4 0 108 0c0-4-4-6-4-10z"/><path d="M12 22v-4"/></svg>,
+              Fresh:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="1.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M4.9 4.9l2.9 2.9m8.4 8.4l2.9 2.9M4.9 19.1l2.9-2.9m8.4-8.4l2.9-2.9"/></svg>,
+              Floral:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="1.5"><circle cx="12" cy="10" r="3"/><path d="M12 7c0-2 1.5-4 3-5"/><path d="M12 7c0-2-1.5-4-3-5"/><path d="M9 10c-2 0-4 1.5-5 3"/><path d="M15 10c2 0 4 1.5 5 3"/><path d="M12 13v9"/></svg>,
+              Gourmand:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="1.5"><path d="M12 8a4 4 0 00-4 4c0 3 4 6 4 6s4-3 4-6a4 4 0 00-4-4z"/><path d="M10 4c0 2 2 4 2 4s2-2 2-4"/></svg>,
+              Other:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>};
+            return(
+            <button key={g.name} onClick={()=>setBrowse({type:'family',value:g.families[0]})} style={{padding:'14px 12px',borderRadius:10,background:'var(--c1)',border:'1px solid var(--bd)',textAlign:'left',transition:'all .2s',display:'flex',alignItems:'center',gap:10}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(0,168,255,0.2)';e.currentTarget.style.background='rgba(0,168,255,0.03)';}} onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--bd)';e.currentTarget.style.background='var(--c1)';}}>
+              <div style={{width:36,height:36,borderRadius:8,background:'var(--bld)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{icons[g.name]||icons.Other}</div>
+              <div><div style={{fontSize:13,fontWeight:600}}>{g.name}</div><div style={{fontSize:10,color:'var(--t4)',marginTop:1}}>{g.count} sub-types</div></div>
+            </button>
+          );})}
         </div>
-      )}
+      </div>
+
+      {/* How it works */}
+      <div style={{background:'var(--c1)',borderRadius:14,border:'1px solid var(--bd)',padding:20}}>
+        <h3 style={{fontFamily:'var(--fd)',fontSize:15,fontWeight:700,marginBottom:10}}>How ScentMetric Works</h3>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12}}>
+          {[{n:'1',t:'Community Data',d:'Reviews from Reddit, Fragrantica, and fragrance forums'},{n:'2',t:'4-Metric Scoring',d:'Similarity, Performance, Projection, Longevity'},{n:'3',t:'Transparent Sources',d:'Every score links to the community data behind it'}].map((s,i)=>(
+            <div key={i} style={{display:'flex',gap:10}}>
+              <div style={{width:26,height:26,borderRadius:6,background:'var(--bld)',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--bl)',fontSize:12,fontWeight:700,flexShrink:0}}>{s.n}</div>
+              <div><div style={{fontSize:12,fontWeight:600,marginBottom:1}}>{s.t}</div><div style={{fontSize:11,color:'var(--t3)',lineHeight:1.4}}>{s.d}</div></div>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
@@ -470,6 +543,113 @@ function DetailPg({oid,dn,nav}){
 }
 
 // ═══════════════════════════════════════
+// SAVINGS CALCULATOR — unique interactive tool
+// ═══════════════════════════════════════
+function CalcPg({onDupe}){
+  const[selected,setSelected]=useState([]);
+  
+  const toggle=(item,dupe)=>{
+    const key=item.id+'-'+dupe.nm;
+    setSelected(prev=>{
+      const exists=prev.find(s=>s.key===key);
+      if(exists)return prev.filter(s=>s.key!==key);
+      return[...prev,{key,og:item.og,ogPrice:item.p,clone:dupe.nm,clonePrice:dupe.pr,brand:dupe.br,score:sc(dupe),ogId:item.id}];
+    });
+  };
+  
+  const totalRetail=selected.reduce((a,s)=>a+s.ogPrice,0);
+  const totalClone=selected.reduce((a,s)=>a+s.clonePrice,0);
+  const totalSaved=totalRetail-totalClone;
+  
+  return(
+    <section style={{padding:'36px 20px 80px',maxWidth:900,margin:'0 auto'}}>
+      <div style={{textAlign:'center',marginBottom:28}}>
+        <h2 style={{fontFamily:'var(--fd)',fontSize:'clamp(26px,4vw,36px)',fontWeight:700,letterSpacing:-1,marginBottom:6}}>
+          <span style={{background:'linear-gradient(135deg,#fff 40%,var(--gn))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>Build Your Collection</span>
+        </h2>
+        <p style={{fontSize:14,color:'var(--t3)',maxWidth:420,margin:'0 auto'}}>Pick the colognes you want. See how much you'd save with clones.</p>
+      </div>
+
+      {/* INSTRUCTIONS */}
+      {selected.length===0&&(
+        <div style={{textAlign:'center',padding:'20px 16px',background:'var(--bld)',borderRadius:12,border:'1px solid rgba(0,168,255,0.1)',marginBottom:24}}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="2" style={{marginBottom:6}}><path d="M12 5v14M5 12h14"/></svg>
+          <p style={{fontSize:13,color:'var(--bl)',fontWeight:500}}>Click on any clone below to add it to your wishlist</p>
+          <p style={{fontSize:11,color:'var(--t3)',marginTop:4}}>Your savings will be calculated in real time</p>
+        </div>
+      )}
+
+      {/* SAVINGS DASHBOARD */}
+      {selected.length>0&&(
+        <div style={{background:'linear-gradient(135deg,rgba(0,168,255,0.05),rgba(52,211,153,0.05))',borderRadius:16,border:'1px solid rgba(0,168,255,0.15)',padding:24,marginBottom:28,textAlign:'center'}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:16}}>
+            <div>
+              <div style={{fontSize:10,color:'var(--t4)',textTransform:'uppercase',letterSpacing:.8,marginBottom:4}}>Retail Total</div>
+              <div className="m" style={{fontSize:24,fontWeight:700,color:'var(--rd)',textDecoration:'line-through'}}>${totalRetail}</div>
+            </div>
+            <div>
+              <div style={{fontSize:10,color:'var(--t4)',textTransform:'uppercase',letterSpacing:.8,marginBottom:4}}>Clone Total</div>
+              <div className="m" style={{fontSize:24,fontWeight:700,color:'var(--bl)'}}>${totalClone}</div>
+            </div>
+            <div>
+              <div style={{fontSize:10,color:'var(--t4)',textTransform:'uppercase',letterSpacing:.8,marginBottom:4}}>You Save</div>
+              <div className="m" style={{fontSize:24,fontWeight:700,color:'var(--gn)'}}>${totalSaved}</div>
+            </div>
+          </div>
+          <div style={{fontSize:12,color:'var(--t3)'}}>
+            {selected.length} fragrance{selected.length!==1?'s':''} · {Math.round(totalSaved/totalRetail*100)}% saved vs retail
+          </div>
+          
+          {/* Selected items */}
+          <div style={{marginTop:16,textAlign:'left'}}>
+            {selected.map(s=>(
+              <div key={s.key} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:'rgba(255,255,255,0.02)',borderRadius:8,border:'1px solid var(--bd)',marginBottom:4}}>
+                <div style={{fontSize:12}}>
+                  <span style={{fontWeight:600}}>{s.clone}</span>
+                  <span style={{color:'var(--t4)',marginLeft:6}}>for {s.og}</span>
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <span className="m" style={{fontSize:11,color:'var(--rd)',textDecoration:'line-through'}}>${s.ogPrice}</span>
+                  <span className="m" style={{fontSize:11,fontWeight:700,color:'var(--bl)'}}>${s.clonePrice}</span>
+                  <button onClick={()=>toggle({id:s.ogId,p:s.ogPrice,og:s.og},{nm:s.clone,pr:s.clonePrice,br:s.brand})} style={{fontSize:14,color:'var(--t4)',padding:'0 4px'}}>×</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Fragrance picker */}
+      <div>
+        {DB.slice(0,20).map(item=>(
+          <div key={item.id} style={{background:'var(--c1)',borderRadius:12,border:'1px solid var(--bd)',marginBottom:8,overflow:'hidden'}}>
+            <div style={{padding:'12px 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <span style={{fontFamily:'var(--fd)',fontSize:14,fontWeight:700}}>{item.og}</span>
+                <span style={{fontSize:11,color:'var(--t4)',marginLeft:8}}>{item.h} · <span className="m" style={{color:'var(--rd)'}}>${item.p}</span></span>
+              </div>
+            </div>
+            <div style={{padding:'0 12px 12px',display:'flex',gap:6,flexWrap:'wrap'}}>
+              {item.dupes.map((d,i)=>{
+                const isSelected=selected.some(s=>s.key===item.id+'-'+d.nm);
+                return(
+                  <button key={i} onClick={()=>toggle(item,d)} style={{fontSize:11,padding:'8px 14px',borderRadius:8,border:'1px solid',borderColor:isSelected?'var(--bl)':'var(--bd)',background:isSelected?'var(--bld)':'transparent',color:isSelected?'var(--bl)':'var(--t2)',transition:'all .2s',display:'flex',alignItems:'center',gap:6,cursor:'pointer'}}
+                    onMouseEnter={e=>{if(!isSelected){e.currentTarget.style.borderColor='rgba(0,168,255,0.2)';e.currentTarget.style.transform='scale(1.03)';e.currentTarget.style.background='rgba(0,168,255,0.02)';}}}
+                    onMouseLeave={e=>{if(!isSelected){e.currentTarget.style.borderColor='var(--bd)';e.currentTarget.style.transform='scale(1)';e.currentTarget.style.background='transparent';}}}>
+                    {isSelected?<svg width="12" height="12" viewBox="0 0 24 24" fill="var(--bl)" stroke="none"><path d="M20 6L9 17l-5-5 1.4-1.4L9 14.2 18.6 4.6z"/></svg>:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>}
+                    {d.nm} <span className="m" style={{color:isSelected?'var(--bl)':'var(--t4)',fontWeight:600}}>${d.pr}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════
 // ABOUT
 // ═══════════════════════════════════════
 function AboutPg(){
@@ -492,6 +672,132 @@ function AboutPg(){
 }
 
 // ═══════════════════════════════════════
+// BLOG PAGE — data-driven articles
+// ═══════════════════════════════════════
+function BlogPg({nav,onDupe}){
+  // Auto-generate articles from database
+  const articles=useMemo(()=>{
+    const a=[];
+    
+    // 1. Best clone per brand
+    const brands={};
+    DB.forEach(i=>i.dupes.forEach(d=>{if(!brands[d.br])brands[d.br]=[];brands[d.br].push({...d,ogName:i.og,ogPrice:i.p,ogId:i.id});}));
+    const topBrands=Object.entries(brands).sort((a,b)=>b[1].length-a[1].length).slice(0,5);
+    topBrands.forEach(([br,clones])=>{
+      const best=clones.sort((a,b)=>sc(b)-sc(a))[0];
+      a.push({id:'brand-'+br.toLowerCase().replace(/\s/g,'-'),cat:'Brand Spotlight',title:`Best ${br} Clones Ranked by Score`,desc:`We scored all ${clones.length} ${br} clones in our database. Here's how they stack up across similarity, performance, projection, and longevity.`,tag:br,
+        items:clones.slice(0,5).map(c=>({nm:c.nm,score:sc(c),ogName:c.ogName,pr:c.pr,ogPrice:c.ogPrice,ogId:c.ogId})),date:'Feb 2025'});
+    });
+
+    // 2. Best value picks (highest savings)
+    const allDupes=[];
+    DB.forEach(i=>i.dupes.forEach(d=>allDupes.push({...d,ogName:i.og,ogPrice:i.p,ogId:i.id,save:sv(i.p,d.pr)})));
+    const topSavings=allDupes.sort((a,b)=>b.save-a.save).slice(0,6);
+    a.push({id:'best-value-clones-2025',cat:'Best Of',title:'Top 6 Cologne Clones With the Biggest Savings',desc:`These clones save you the most money while maintaining high ScentMetric scores. The #1 pick saves you ${topSavings[0].save}%.`,tag:'Value',
+      items:topSavings.map(c=>({nm:c.nm,score:sc(c),ogName:c.ogName,pr:c.pr,ogPrice:c.ogPrice,ogId:c.ogId,save:c.save})),date:'Feb 2025'});
+
+    // 3. Highest-scoring clones overall
+    const topScored=allDupes.sort((a,b)=>sc(b)-sc(a)).slice(0,6);
+    a.push({id:'highest-rated-clones-2025',cat:'Best Of',title:'The 6 Highest-Rated Cologne Clones of 2025',desc:'These are the top-scoring clones across all 4 ScentMetric categories. Community consensus says these are as close as it gets.',tag:'Top Rated',
+      items:topScored.map(c=>({nm:c.nm,score:sc(c),ogName:c.ogName,pr:c.pr,ogPrice:c.ogPrice,ogId:c.ogId})),date:'Feb 2025'});
+
+    // 4. Best performance beasts (highest projection + longevity)
+    const beasts=allDupes.sort((a,b)=>(b.proj+b.lon*8)-(a.proj+a.lon*8)).slice(0,6);
+    a.push({id:'beast-mode-clones',cat:'Deep Dive',title:'6 Clones That Out-Project Their Originals',desc:'These clones don\'t just smell similar — they project harder and last longer than the expensive originals they\'re based on.',tag:'Performance',
+      items:beasts.map(c=>({nm:c.nm,score:sc(c),ogName:c.ogName,pr:c.pr,ogPrice:c.ogPrice,ogId:c.ogId,proj:c.proj,lon:c.lon})),date:'Feb 2025'});
+
+    // 5. Is CDNIM still king?
+    const aventusDupes=DB.find(i=>i.og==='Creed Aventus');
+    if(aventusDupes){
+      a.push({id:'is-cdnim-still-king-2025',cat:'Analysis',title:'Is Club de Nuit Intense Still the Best Aventus Clone?',desc:`CDNIM has been the go-to Aventus clone for years. But with ${aventusDupes.dupes.length} competitors now scored, has it been dethroned?`,tag:'Aventus',
+        items:aventusDupes.dupes.map(c=>({nm:c.nm,score:sc(c),ogName:aventusDupes.og,pr:c.pr,ogPrice:aventusDupes.p,ogId:aventusDupes.id})),date:'Feb 2025'});
+    }
+
+    // 6. Budget under $25
+    const under25=allDupes.filter(d=>d.pr<=25).sort((a,b)=>sc(b)-sc(a)).slice(0,6);
+    a.push({id:'best-clones-under-25',cat:'Budget',title:'Best Cologne Clones Under $25',desc:'You don\'t need to spend more than $25 to smell expensive. These are the highest-scoring clones at rock-bottom prices.',tag:'Under $25',
+      items:under25.map(c=>({nm:c.nm,score:sc(c),ogName:c.ogName,pr:c.pr,ogPrice:c.ogPrice,ogId:c.ogId})),date:'Feb 2025'});
+
+    return a;
+  },[]);
+
+  const[sel,setSel]=useState(null);
+  const article=sel?articles.find(a=>a.id===sel):null;
+
+  if(article){
+    return(
+      <section style={{padding:'36px 20px 80px',maxWidth:800,margin:'0 auto'}}>
+        <button onClick={()=>setSel(null)} style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:13,color:'var(--t3)',marginBottom:24}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg> Back to Blog
+        </button>
+        <span style={{fontSize:10,color:'var(--bl)',textTransform:'uppercase',letterSpacing:1.5,fontWeight:600,display:'block',marginBottom:6}}>{article.cat}</span>
+        <h1 style={{fontFamily:'var(--fd)',fontSize:'clamp(24px,4vw,32px)',fontWeight:700,marginBottom:8}}>{article.title}</h1>
+        <p style={{fontSize:14,color:'var(--t3)',marginBottom:6}}>{article.desc}</p>
+        <span style={{fontSize:11,color:'var(--t4)',display:'block',marginBottom:20}}>{article.date} · Based on ScentMetric data</span>
+        
+        {/* Blog narrative intro */}
+        <div style={{fontSize:14,color:'var(--t2)',lineHeight:1.8,marginBottom:28}}>
+          {article.id.includes('brand-')&&<p>If you've spent any time on r/fragrance, you know this brand keeps coming up. But not all their offerings are equal — some are near-identical clones while others just share a vague family resemblance. We ran every {article.tag} clone in our database through our 4-metric scoring system to separate the genuine contenders from the hype. Here's what the data says.</p>}
+          {article.id==='best-value-clones-2025'&&<p>Let's talk about the elephant in the room: a $300+ cologne contains maybe $15 worth of ingredients. The rest is marketing, packaging, and brand prestige. That's not a criticism — it's just math. These six clones represent the widest gap between what you'd pay for the original and what the clone actually costs, while still maintaining scores that the community respects. This is where the value argument for clones becomes undeniable.</p>}
+          {article.id==='highest-rated-clones-2025'&&<p>Every clone in our database gets scored across four dimensions: Similarity (how close does it actually smell?), Performance (does it hold up throughout the day?), Projection (can people around you smell it?), and Longevity (how many hours before it fades?). These six fragrances scored highest overall — meaning the Reddit community, Fragrantica reviewers, and fragrance forum veterans all agree: these are the real deal.</p>}
+          {article.id==='beast-mode-clones'&&<p>Here's a dirty secret of the fragrance world: some clones actually perform better than the originals they're based on. Higher projection, longer lasting, more sillage. It sounds like marketing nonsense, but the community data backs it up. These six clones don't just match their expensive counterparts — they outperform them where it matters most.</p>}
+          {article.id==='is-cdnim-still-king-2025'&&<p>Armaf Club de Nuit Intense Man has been the undisputed king of Aventus clones since roughly 2018. It launched the entire "Arabian clone" movement into the mainstream. But the market has evolved. Afnan, Lattafa, and others have entered the ring with serious contenders. We put every Aventus clone through our scoring system to answer the question everyone on r/fragrance keeps asking: is CDNIM still worth it in 2025, or has it been dethroned?</p>}
+          {article.id==='best-clones-under-25'&&<p>The sweet spot for clone fragrances isn't $50 or $40 — it's under $25. At this price point, you're spending roughly the cost of a nice lunch to smell like you're wearing a $300 niche fragrance. The risk is essentially zero. These six picks scored highest in our database while staying under the $25 threshold, proving that smelling expensive has never been cheaper.</p>}
+        </div>
+        
+        <div>
+          {article.items.map((c,i)=>(
+            <button key={i} onClick={()=>onDupe(c.ogId,c.nm)} style={{display:'flex',justifyContent:'space-between',alignItems:'center',width:'100%',textAlign:'left',padding:'16px',background:'var(--c1)',borderRadius:12,border:'1px solid var(--bd)',marginBottom:10,transition:'border-color .2s'}}
+              onMouseEnter={e=>e.currentTarget.style.borderColor='var(--bh)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--bd)'}>
+              <div style={{flex:1}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                  <span className="m" style={{fontSize:11,fontWeight:700,color:'var(--bl)',background:'var(--bld)',padding:'2px 8px',borderRadius:4}}>#{i+1}</span>
+                  <span style={{fontFamily:'var(--fd)',fontSize:15,fontWeight:700}}>{c.nm}</span>
+                </div>
+                <span style={{fontSize:12,color:'var(--t3)'}}>Clone of {c.ogName}</span>
+              </div>
+              <div style={{textAlign:'right',flexShrink:0,marginLeft:12}}>
+                <div>
+                  <span className="m" style={{fontSize:11,textDecoration:'line-through',color:'var(--rd)',marginRight:6}}>${c.ogPrice}</span>
+                  <span className="m" style={{fontSize:16,fontWeight:700,color:'var(--bl)'}}>${c.pr}</span>
+                </div>
+                <div className="m" style={{fontSize:13,fontWeight:700,color:clr(c.score),marginTop:2}}>Score: {c.score}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+        <p style={{fontSize:12,color:'var(--t4)',marginTop:20,fontStyle:'italic'}}>Scores based on community data from r/fragrance, Fragrantica, and other sources. Click any clone for full breakdown with Reddit reviews.</p>
+      </section>
+    );
+  }
+
+  return(
+    <section style={{padding:'36px 20px 80px',maxWidth:900,margin:'0 auto'}}>
+      <h2 style={{fontFamily:'var(--fd)',fontSize:'clamp(24px,4vw,32px)',fontWeight:700,marginBottom:4}}>Blog</h2>
+      <p style={{fontSize:13,color:'var(--t3)',marginBottom:28}}>Data-driven breakdowns and rankings from ScentMetric</p>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:14}}>
+        {articles.map(a=>(
+          <button key={a.id} onClick={()=>setSel(a.id)} style={{textAlign:'left',background:'var(--c1)',borderRadius:14,border:'1px solid var(--bd)',padding:20,transition:'all .2s'}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--bh)';e.currentTarget.style.transform='translateY(-2px)';}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--bd)';e.currentTarget.style.transform='none';}}>
+            <div style={{display:'flex',gap:8,marginBottom:10}}>
+              <span style={{fontSize:9,fontWeight:600,textTransform:'uppercase',letterSpacing:.5,color:'var(--bl)',background:'var(--bld)',padding:'3px 8px',borderRadius:4}}>{a.cat}</span>
+              <span style={{fontSize:9,fontWeight:600,textTransform:'uppercase',letterSpacing:.5,color:'var(--gn)',background:'rgba(52,211,153,0.08)',padding:'3px 8px',borderRadius:4}}>{a.tag}</span>
+            </div>
+            <h3 style={{fontFamily:'var(--fd)',fontSize:16,fontWeight:700,lineHeight:1.3,marginBottom:8}}>{a.title}</h3>
+            <p style={{fontSize:12,color:'var(--t3)',lineHeight:1.5,marginBottom:10}}>{a.desc}</p>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:10,color:'var(--t4)'}}>{a.date}</span>
+              <span style={{fontSize:11,color:'var(--bl)',fontWeight:500}}>Read →</span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════
 // FOOTER
 // ═══════════════════════════════════════
 function Foot({nav}){
@@ -504,7 +810,7 @@ function Foot({nav}){
           <span style={{fontSize:11,color:'var(--t4)',marginLeft:8}}>© 2025</span>
         </div>
         <div style={{display:'flex',gap:20}}>
-          {[{l:'Rankings',p:'rank'},{l:'Search',p:'search'},{l:'About',p:'about'}].map(l=><button key={l.p} onClick={()=>nav(l.p)} style={{fontSize:11,color:'var(--t3)'}}>
+          {[{l:'Rankings',p:'rank'},{l:'Discover',p:'search'},{l:'Build',p:'calc'},{l:'Blog',p:'blog'},{l:'About',p:'about'}].map(l=><button key={l.p} onClick={()=>nav(l.p)} style={{fontSize:11,color:'var(--t3)'}}>
             {l.l}
           </button>)}
         </div>
@@ -525,6 +831,41 @@ function Home({nav,onSearch,onDupe}){
         <button onClick={()=>nav('rank')} style={{fontSize:12,color:'var(--bl)',fontWeight:500}}>View all →</button>
       </div>
       {DB.slice(0,5).map(i=><Block key={i.id} item={i} onDupe={onDupe}/>)}
+    </section>
+    <section style={{padding:'0 20px 40px',maxWidth:1060,margin:'0 auto'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16}}>
+        <h2 style={{fontFamily:'var(--fd)',fontSize:20,fontWeight:700}}>From the Blog</h2>
+        <button onClick={()=>nav('blog')} style={{fontSize:12,color:'var(--bl)',fontWeight:500}}>View all →</button>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:12}}>
+        {[
+          {t:'Is CDNIM Still the Best Aventus Clone?',c:'Analysis',tg:'Aventus'},
+          {t:'Best Cologne Clones Under $25',c:'Budget',tg:'Under $25'},
+          {t:'6 Clones That Out-Project Their Originals',c:'Deep Dive',tg:'Performance'}
+        ].map((a,i)=>(
+          <button key={i} onClick={()=>nav('blog')} style={{textAlign:'left',background:'var(--c1)',borderRadius:12,border:'1px solid var(--bd)',padding:16,transition:'border-color .2s'}}
+            onMouseEnter={e=>e.currentTarget.style.borderColor='var(--bh)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--bd)'}>
+            <div style={{display:'flex',gap:6,marginBottom:8}}>
+              <span style={{fontSize:9,fontWeight:600,textTransform:'uppercase',color:'var(--bl)',background:'var(--bld)',padding:'2px 6px',borderRadius:3}}>{a.c}</span>
+              <span style={{fontSize:9,fontWeight:600,textTransform:'uppercase',color:'var(--gn)',background:'rgba(52,211,153,0.08)',padding:'2px 6px',borderRadius:3}}>{a.tg}</span>
+            </div>
+            <h3 style={{fontFamily:'var(--fd)',fontSize:14,fontWeight:700,lineHeight:1.3}}>{a.t}</h3>
+          </button>
+        ))}
+      </div>
+    </section>
+    {/* COLLECTION BUILDER CTA */}
+    <section style={{padding:'0 20px 48px',maxWidth:1060,margin:'0 auto'}}>
+      <button onClick={()=>nav('calc')} style={{width:'100%',textAlign:'left',background:'linear-gradient(135deg,rgba(0,168,255,0.04),rgba(52,211,153,0.04))',borderRadius:16,border:'1px solid rgba(0,168,255,0.12)',padding:'28px 24px',transition:'border-color .2s',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}
+        onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(0,168,255,0.3)'} onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(0,168,255,0.12)'}>
+        <div>
+          <h3 style={{fontFamily:'var(--fd)',fontSize:18,fontWeight:700,marginBottom:4}}>Build Your Clone Collection</h3>
+          <p style={{fontSize:13,color:'var(--t3)'}}>Pick your dream colognes and see exactly how much you'd save with clones.</p>
+        </div>
+        <span style={{fontSize:13,fontWeight:600,color:'var(--bl)',display:'flex',alignItems:'center',gap:5}}>
+          Try it free <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </span>
+      </button>
     </section>
   </div>);
 }
@@ -553,6 +894,8 @@ function App(){
     case'rank':content=<RankPage onDupe={onDupe}/>;break;
     case'search':content=<SearchPg iq={sq} onSearch={onSearch} onDupe={onDupe}/>;break;
     case'about':content=<AboutPg/>;break;
+    case'blog':content=<BlogPg nav={nav} onDupe={onDupe}/>;break;
+    case'calc':content=<CalcPg onDupe={onDupe}/>;break;
     case'detail':content=det?<DetailPg oid={det.id} dn={det.nm} nav={nav}/>:<Home nav={nav} onSearch={onSearch} onDupe={onDupe}/>;break;
     default:content=<Home nav={nav} onSearch={onSearch} onDupe={onDupe}/>;
   }
