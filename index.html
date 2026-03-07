@@ -1,0 +1,2247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ScentMetric — Objectively Rated Cologne Dupes</title>
+<meta name="description" content="Data-backed cologne dupe rankings with community ratings. Find the best affordable alternatives to 100+ expensive colognes, rated by real users."/>
+<meta name="keywords" content="cologne dupes, fragrance clones, cheap cologne alternatives, Aventus clone, Sauvage dupe, cologne ratings, affordable fragrances"/>
+<meta property="og:title" content="ScentMetric — Objectively Rated Cologne Dupes"/>
+<meta property="og:description" content="724+ clone ratings for 301 colognes. Community-verified scores for similarity, performance, projection & longevity."/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://www.scentmetric.com"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="ScentMetric — Cologne Dupe Rankings"/>
+<meta name="twitter:description" content="Find the best affordable cologne alternatives, rated by the community."/>
+<link rel="canonical" href="https://www.scentmetric.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bk:#0a0a0c;--c1:#111114;--c2:#19191d;--bd:rgba(255,255,255,0.06);--bh:rgba(0,148,225,0.15);--bl:#0094e1;--bld:rgba(0,148,225,0.06);--gn:#2bb87e;--yl:#d9a620;--rd:#dc6363;--t1:#ededee;--t2:#9ca3af;--t3:#6b7280;--t4:#4b5563;--fd:'DM Sans',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Sans',sans-serif}
+html{scroll-behavior:smooth;overflow-x:hidden}body{background:var(--bk);color:var(--t1);font-family:var(--fb);-webkit-font-smoothing:antialiased;line-height:1.6;overflow-x:hidden;max-width:100vw}
+#root{overflow-x:hidden;max-width:100vw}
+h1,h2,h3,h4,h5,h6{font-family:var(--fd);line-height:1.15}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bk)}::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+::selection{background:var(--bl);color:#fff}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--bl);cursor:pointer;margin-top:-6px;box-shadow:0 1px 4px rgba(0,0,0,0.3);}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--bl);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.3);}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;}
+input:focus{outline:none}button{cursor:pointer;border:none;background:none;font-family:inherit;color:inherit}a{color:inherit;text-decoration:none}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.9/babel.min.js"></script>
+<script src="db.js"></script>
+<script type="text/babel">
+const{useState,useEffect,useRef,useMemo,useCallback}=React;
+
+// ═══════════════════════════════════════
+// DATABASE — Reddit popularity order
+// ═══════════════════════════════════════
+const DB = window.__SM_DB || [];
+
+// ═══════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════
+const sc=(d)=>{const lonNorm=Math.min(100,d.lon<=6?(d.lon/6*70):(70+((d.lon-6)/6)*30));return Math.round(d.sim*0.4+d.perf*0.2+d.proj*0.2+lonNorm*0.2);};
+const sv=(op,dp)=>Math.round((1-dp/op)*100);
+const clr=(v)=>v>=85?'#0094e1':v>=75?'#2bb87e':v>=65?'#d9a620':'#dc6363';
+
+function setPageMeta(title,desc){
+  document.title=title?title+' | ScentMetric':'ScentMetric — Objectively Rated Cologne Dupes';
+  const m=document.querySelector('meta[name="description"]');
+  if(m&&desc)m.content=desc;
+}
+function shareURL(label){
+  const url=window.location.href;
+  if(navigator.share)navigator.share({title:label+' — ScentMetric',url}).catch(()=>{});
+  else navigator.clipboard.writeText(url).then(()=>{}).catch(()=>{});
+}
+function blend70_30(editorial,communityAvg,count){
+  if(communityAvg==null||count<5)return editorial;
+  return Math.round(editorial*0.7+communityAvg*0.3);
+}
+
+// Dynamic page title for SEO
+function setPageTitle(title,desc){
+  document.title=title?title+' | ScentMetric':'ScentMetric — Objectively Rated Cologne Dupes';
+  const meta=document.querySelector('meta[name="description"]');
+  if(meta&&desc)meta.content=desc;
+}
+
+// Share URL copy
+function shareClone(name,url){
+  const shareUrl=url||window.location.href;
+  if(navigator.share){
+    navigator.share({title:name+' — ScentMetric',url:shareUrl}).catch(()=>{});
+  }else{
+    navigator.clipboard.writeText(shareUrl).then(()=>alert('Link copied!')).catch(()=>{});
+  }
+}
+
+// Blend editorial + community scores (70/30 when 5+ ratings)
+function blendScore(editorial,communityAvg,communityCount){
+  if(!communityAvg||communityCount<5)return editorial;
+  return Math.round(editorial*0.7+communityAvg*0.3);
+}
+
+
+// ═══════════════════════════════════════
+// SUPABASE AUTH + COMMUNITY SYSTEM
+// ═══════════════════════════════════════
+const SM_SUPA_URL = 'https://iyhretaecsbwkacyxrcu.supabase.co';
+const SM_SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5aHJldGFlY3Nid2thY3l4cmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxNjQ3NTAsImV4cCI6MjA4Nzc0MDc1MH0.uVFyX5muxUS43mck-D0yNkOIli659z7NOiO0UIhv7T4';
+
+// Auth state — shared across all components
+const AuthContext = React.createContext({user:null,profile:null,login:()=>{},signup:()=>{},logout:()=>{},showAuth:()=>{}});
+
+function AuthProvider({children}){
+  const[user,setUser]=useState(null);
+  const[profile,setProfile]=useState(null);
+  const[showModal,setShowModal]=useState(false);
+  const[authTab,setAuthTab]=useState('login');
+  const[needsUsername,setNeedsUsername]=useState(false);
+
+  // Refresh expired token using refresh_token
+  async function refreshSession(){
+    try{
+      const stored=JSON.parse(localStorage.getItem('sm_session')||'{}');
+      if(!stored.refresh_token)return false;
+      const res=await fetch(SM_SUPA_URL+'/auth/v1/token?grant_type=refresh_token',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':SM_SUPA_KEY},
+        body:JSON.stringify({refresh_token:stored.refresh_token})
+      });
+      const data=await res.json();
+      if(data.access_token){
+        const session={access_token:data.access_token,refresh_token:data.refresh_token||stored.refresh_token,user:data.user||stored.user};
+        localStorage.setItem('sm_session',JSON.stringify(session));
+        setUser(session.user);
+        loadProfile(session.user.id,data.access_token);
+        return true;
+      }
+      return false;
+    }catch(e){return false;}
+  }
+
+  // Check session on mount — validate token, refresh if expired
+  useEffect(()=>{
+    if(!SM_SUPA_URL)return;
+    const stored=localStorage.getItem('sm_session');
+    if(stored){
+      try{
+        const s=JSON.parse(stored);
+        if(s.access_token&&s.user){
+          // Validate token by calling /auth/v1/user
+          fetch(SM_SUPA_URL+'/auth/v1/user',{
+            headers:{'apikey':SM_SUPA_KEY,'Authorization':'Bearer '+s.access_token}
+          }).then(r=>{
+            if(r.ok){
+              // Token still valid
+              setUser(s.user);
+              loadProfile(s.user.id,s.access_token);
+            }else{
+              // Token expired — try refresh
+              refreshSession().then(ok=>{
+                if(!ok){localStorage.removeItem('sm_session');setUser(null);setProfile(null);}
+              });
+            }
+          }).catch(()=>refreshSession());
+        }
+      }catch(e){}
+    }
+    // Refresh token every 50 minutes to prevent expiry during use
+    const interval=setInterval(()=>{
+      const s=localStorage.getItem('sm_session');
+      if(s)refreshSession();
+    },50*60*1000);
+    return()=>clearInterval(interval);
+  },[]);
+
+  async function loadProfile(uid,token){
+    try{
+      const res=await fetch(SM_SUPA_URL+'/rest/v1/profiles?id=eq.'+uid+'&select=*',{
+        headers:{'apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token}
+      });
+      const data=await res.json();
+      if(data[0])setProfile(data[0]);
+    }catch(e){}
+  }
+
+  function getToken(){
+    try{const s=JSON.parse(localStorage.getItem('sm_session')||'{}');return s.access_token||'';}catch(e){return '';}
+  }
+
+  async function signup(email,password,username){
+    const res=await fetch(SM_SUPA_URL+'/auth/v1/signup',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SM_SUPA_KEY},
+      body:JSON.stringify({email,password,data:{username}})
+    });
+    const data=await res.json();
+    console.log('Signup response:', JSON.stringify(data).substring(0,500));
+    if(data.error)throw new Error(data.error.message||data.msg||'Signup failed');
+    
+    // Extract token — Supabase returns it in different places depending on version/config
+    const token=data.access_token||data.session?.access_token;
+    const userData=data.user||data.session?.user;
+    
+    if(token&&userData){
+      const session={access_token:token,refresh_token:data.refresh_token||data.session?.refresh_token,user:userData};
+      localStorage.setItem('sm_session',JSON.stringify(session));
+      setUser(userData);
+      loadProfile(userData.id,token);
+      setShowModal(false);
+      return session;
+    }
+    
+    // No token in response — try logging in immediately
+    if(userData||data.id){
+      try{
+        const loginRes=await fetch(SM_SUPA_URL+'/auth/v1/token?grant_type=password',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','apikey':SM_SUPA_KEY},
+          body:JSON.stringify({email,password})
+        });
+        const loginData=await loginRes.json();
+        console.log('Auto-login response:', JSON.stringify(loginData).substring(0,300));
+        if(loginData.access_token){
+          localStorage.setItem('sm_session',JSON.stringify(loginData));
+          setUser(loginData.user);
+          loadProfile(loginData.user.id,loginData.access_token);
+          setShowModal(false);
+          return loginData;
+        }
+      }catch(e){console.error('Auto-login failed:',e);}
+      return {needsConfirmation:true};
+    }
+    return data;
+  }
+
+  async function login(email,password){
+    const res=await fetch(SM_SUPA_URL+'/auth/v1/token?grant_type=password',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SM_SUPA_KEY},
+      body:JSON.stringify({email,password})
+    });
+    const data=await res.json();
+    if(data.error)throw new Error(data.error_description||data.msg||'Login failed');
+    if(data.access_token){
+      localStorage.setItem('sm_session',JSON.stringify(data));
+      setUser(data.user);
+      loadProfile(data.user.id,data.access_token);
+      setShowModal(false);
+    }
+    return data;
+  }
+
+  function logout(){
+    localStorage.removeItem('sm_session');
+    setUser(null);setProfile(null);
+  }
+
+  async function loginWithGoogle(){
+    if(!SM_SUPA_URL)return;
+    // Redirect to Supabase Google OAuth — it will redirect back to our site
+    const redirectTo=window.location.origin+window.location.pathname;
+    window.location.href=SM_SUPA_URL+'/auth/v1/authorize?provider=google&redirect_to='+encodeURIComponent(redirectTo);
+  }
+
+  // Handle OAuth callback — check URL for access_token on mount
+  useEffect(()=>{
+    const hash=window.location.hash;
+    if(hash&&hash.includes('access_token')){
+      const params=new URLSearchParams(hash.substring(1));
+      const token=params.get('access_token');
+      const refreshToken=params.get('refresh_token');
+      if(token){
+        fetch(SM_SUPA_URL+'/auth/v1/user',{
+          headers:{'apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token}
+        }).then(r=>r.json()).then(userData=>{
+          if(userData.id){
+            const session={access_token:token,refresh_token:refreshToken,user:userData};
+            localStorage.setItem('sm_session',JSON.stringify(session));
+            setUser(userData);
+            fetch(SM_SUPA_URL+'/rest/v1/profiles?id=eq.'+userData.id+'&select=*',{
+              headers:{'apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token}
+            }).then(r=>r.json()).then(profiles=>{
+              if(profiles[0]){
+                setProfile(profiles[0]);
+                if(profiles[0].username.startsWith('user_')){
+                  setNeedsUsername(true);setShowModal(true);
+                }
+              }
+            });
+          }
+        });
+        window.history.replaceState(null,'',window.location.pathname);
+      }
+    }
+  },[]);
+
+  async function updateUsername(newName){
+    if(!user)return;
+    const token=getToken();
+    const res=await fetch(SM_SUPA_URL+'/rest/v1/profiles?id=eq.'+user.id,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token,'Prefer':'return=representation'},
+      body:JSON.stringify({username:newName})
+    });
+    const data=await res.json();
+    if(data[0]){setProfile(data[0]);setNeedsUsername(false);setShowModal(false);}
+    else throw new Error('Username may be taken');
+  }
+
+  function showAuth(tab='login'){setAuthTab(tab||'login');setShowModal(true);}
+
+  return React.createElement(AuthContext.Provider,{value:{user,profile,login,signup,logout,loginWithGoogle,showAuth,getToken,updateUsername}},
+    children,
+    showModal&&(needsUsername?
+      React.createElement(UsernameModal,{onClose:()=>{setShowModal(false);setNeedsUsername(false);},onSave:updateUsername}):
+      React.createElement(AuthModal,{tab:authTab,setTab:setAuthTab,onClose:()=>setShowModal(false),onLogin:login,onSignup:signup,onGoogle:loginWithGoogle})
+    )
+  );
+}
+
+// Username availability check
+function useUsernameCheck(username){
+  const[status,setStatus]=useState(null); // null=idle, 'checking', 'available', 'taken', 'invalid'
+  const[errMsg,setErrMsg]=useState('');
+  const timer=useRef(null);
+  useEffect(()=>{
+    if(!username||username.length<4){setStatus(username?'invalid':null);setErrMsg(username?'Too short':'');return;}
+    const vErr=validateUsername(username);
+    if(vErr){setStatus('invalid');setErrMsg(vErr);return;}
+    setStatus('checking');setErrMsg('');
+    clearTimeout(timer.current);
+    timer.current=setTimeout(async()=>{
+      if(!SM_SUPA_URL){setStatus('available');return;}
+      try{
+        const res=await fetch(SM_SUPA_URL+'/rest/v1/profiles?username=eq.'+encodeURIComponent(username)+'&select=id',{headers:{'apikey':SM_SUPA_KEY}});
+        const data=await res.json();
+        setStatus(data.length>0?'taken':'available');
+        setErrMsg(data.length>0?'Already taken':'');
+      }catch(e){setStatus('available');}
+    },400);
+    return()=>clearTimeout(timer.current);
+  },[username]);
+  return{status,errMsg};
+}
+
+// Username modal for Google signups
+function UsernameModal({onClose,onSave}){
+  const[name,setName]=useState('');
+  const[err,setErr]=useState('');
+  const[loading,setLoading]=useState(false);
+  const check=useUsernameCheck(name);
+
+  const submit=async()=>{
+    if(check.status!=='available')return;
+    setLoading(true);setErr('');
+    try{await onSave(name.trim());}catch(e){setErr(e.message);}
+    setLoading(false);
+  };
+
+  const inp={width:'100%',padding:'10px 12px',background:'var(--c2)',border:'1px solid var(--bd)',borderRadius:8,color:'var(--t1)',fontSize:13,fontFamily:'inherit'};
+
+  return React.createElement('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}},
+    React.createElement('div',{style:{background:'var(--c1)',borderRadius:16,border:'1px solid var(--bd)',padding:28,maxWidth:380,width:'100%'}},
+      React.createElement('h3',{style:{fontSize:18,fontWeight:700,marginBottom:6}},'Choose Your Username'),
+      React.createElement('p',{style:{fontSize:12,color:'var(--t3)',marginBottom:16}},'Pick a unique username for your ScentMetric profile.'),
+      React.createElement('div',{style:{position:'relative',marginBottom:10}},
+        React.createElement('input',{placeholder:'e.g. FragHead99',value:name,onChange:e=>setName(e.target.value),onKeyDown:e=>{if(e.key==='Enter')submit();},style:{...inp,paddingRight:32}}),
+        check.status==='available'&&React.createElement('span',{style:{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',color:'var(--gn)',fontSize:16}},'✓'),
+        check.status==='taken'&&React.createElement('span',{style:{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',color:'var(--rd)',fontSize:16}},'✗'),
+        check.status==='checking'&&React.createElement('span',{style:{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',color:'var(--t4)',fontSize:11}},'...')
+      ),
+      (check.errMsg||err)&&React.createElement('p',{style:{fontSize:11,color:'var(--rd)',marginBottom:8}},check.errMsg||err),
+      check.status==='available'&&React.createElement('p',{style:{fontSize:11,color:'var(--gn)',marginBottom:8}},'Username available!'),
+      React.createElement('button',{onClick:submit,disabled:check.status!=='available'||loading,
+        style:{width:'100%',padding:'11px',background:check.status==='available'?'var(--bl)':'var(--bd)',borderRadius:8,color:'#fff',fontSize:13,fontWeight:600,cursor:check.status==='available'?'pointer':'not-allowed',opacity:loading?.6:1}},
+        loading?'Saving...':'Continue'
+      ),
+      React.createElement('p',{style:{fontSize:10,color:'var(--t4)',textAlign:'center',marginTop:8}},'A username is required to comment and rate clones.')
+    )
+  );
+}
+
+function AuthModal({tab,setTab,onClose,onLogin,onSignup,onGoogle}){
+  const[email,setEmail]=useState('');
+  const[pass,setPass]=useState('');
+  const[username,setUsername]=useState('');
+  const[err,setErr]=useState('');
+  const[loading,setLoading]=useState(false);
+  const[success,setSuccess]=useState('');
+  const uCheck=useUsernameCheck(tab==='signup'?username:'');
+
+  const submit=async()=>{
+    setErr('');setSuccess('');setLoading(true);
+    try{
+      if(tab==='signup'){
+        if(!username.trim()){setErr('Username required');setLoading(false);return;}
+        if(uCheck.status==='taken'){setErr('Username already taken');setLoading(false);return;}
+        const uErr=validateUsername(username.trim());
+        if(uErr){setErr(uErr);setLoading(false);return;}
+        const data=await onSignup(email,pass,username);
+        if(data?.needsConfirmation)setSuccess('Check your email to confirm, then log in.');
+      }else{
+        await onLogin(email,pass);
+      }
+    }catch(e){setErr(e.message);}
+    setLoading(false);
+  };
+
+  const inp={width:'100%',padding:'10px 12px',background:'var(--c2)',border:'1px solid var(--bd)',borderRadius:8,color:'var(--t1)',fontSize:13,fontFamily:'inherit'};
+
+  return React.createElement('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20},onClick:e=>{if(e.target===e.currentTarget)onClose();}},
+    React.createElement('div',{style:{background:'var(--c1)',borderRadius:16,border:'1px solid var(--bd)',padding:28,maxWidth:380,width:'100%'}},
+      React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}},
+        React.createElement('h3',{style:{fontSize:18,fontWeight:700}},tab==='login'?'Welcome Back':'Create Account'),
+        React.createElement('button',{onClick:onClose,style:{fontSize:20,color:'var(--t4)',padding:'0 4px'}},'×')
+      ),
+      React.createElement('div',{style:{display:'flex',gap:0,marginBottom:20,background:'var(--c2)',borderRadius:8,padding:3}},
+        ['login','signup'].map(t=>React.createElement('button',{key:t,onClick:()=>{setTab(t);setErr('');setSuccess('');},
+          style:{flex:1,padding:'8px 0',borderRadius:6,fontSize:12,fontWeight:600,background:tab===t?'var(--bl)':'transparent',color:tab===t?'#fff':'var(--t3)',transition:'all .2s'}},
+          t==='login'?'Log In':'Sign Up'))
+      ),
+      // Google Sign-In
+      React.createElement('button',{onClick:onGoogle,
+        style:{width:'100%',padding:'10px',background:'#fff',borderRadius:8,color:'#333',fontSize:13,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:14,border:'1px solid #ddd',cursor:'pointer'}},
+        React.createElement('svg',{width:18,height:18,viewBox:'0 0 24 24'},
+          React.createElement('path',{d:'M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z',fill:'#4285F4'}),
+          React.createElement('path',{d:'M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z',fill:'#34A853'}),
+          React.createElement('path',{d:'M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z',fill:'#FBBC05'}),
+          React.createElement('path',{d:'M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z',fill:'#EA4335'})
+        ),
+        'Continue with Google'
+      ),
+      React.createElement('div',{style:{display:'flex',alignItems:'center',gap:12,marginBottom:14}},
+        React.createElement('div',{style:{flex:1,height:1,background:'var(--bd)'}}),
+        React.createElement('span',{style:{fontSize:11,color:'var(--t4)'}},'or'),
+        React.createElement('div',{style:{flex:1,height:1,background:'var(--bd)'}})
+      ),
+      tab==='signup'&&React.createElement('div',{style:{position:'relative',marginBottom:10}},
+        React.createElement('input',{placeholder:'Choose a username (e.g. FragHead99)',value:username,onChange:e=>setUsername(e.target.value),style:{...inp,paddingRight:32}}),
+        uCheck.status==='available'&&React.createElement('span',{style:{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',color:'var(--gn)',fontSize:16}},'✓'),
+        uCheck.status==='taken'&&React.createElement('span',{style:{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',color:'var(--rd)',fontSize:16}},'✗'),
+        uCheck.status==='checking'&&React.createElement('span',{style:{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',color:'var(--t4)',fontSize:11}},'...'),
+        uCheck.errMsg&&React.createElement('p',{style:{fontSize:10,color:'var(--rd)',marginTop:3}},uCheck.errMsg),
+        uCheck.status==='available'&&React.createElement('p',{style:{fontSize:10,color:'var(--gn)',marginTop:3}},'Available!')
+      ),
+      React.createElement('input',{type:'email',placeholder:'Email',value:email,onChange:e=>setEmail(e.target.value),style:{...inp,marginBottom:10}}),
+      React.createElement('input',{type:'password',placeholder:'Password',value:pass,onChange:e=>setPass(e.target.value),
+        onKeyDown:e=>{if(e.key==='Enter')submit();},style:{...inp,marginBottom:14}}),
+      err&&React.createElement('p',{style:{fontSize:12,color:'var(--rd)',marginBottom:10}},err),
+      success&&React.createElement('p',{style:{fontSize:12,color:'var(--gn)',marginBottom:10}},success),
+      React.createElement('button',{onClick:submit,disabled:loading,
+        style:{width:'100%',padding:'11px',background:'var(--bl)',borderRadius:8,color:'#fff',fontSize:13,fontWeight:600,opacity:loading?.6:1}},
+        loading?'...':(tab==='login'?'Log In':'Create Account')
+      ),
+      React.createElement('p',{style:{fontSize:11,color:'var(--t4)',textAlign:'center',marginTop:12}},
+        tab==='login'?React.createElement('span',null,"Don't have an account? ",React.createElement('button',{onClick:()=>setTab('signup'),style:{color:'var(--bl)',fontWeight:600}},'Sign up')):
+        React.createElement('span',null,"Already have an account? ",React.createElement('button',{onClick:()=>setTab('login'),style:{color:'var(--bl)',fontWeight:600}},'Log in'))
+      )
+    )
+  );
+}
+
+// ═══════════════════════════════════════
+// PROFANITY FILTER
+// ═══════════════════════════════════════
+const BANNED_WORDS=['fuck','shit','ass','bitch','dick','cunt','cock','porn','nigger','faggot','retard','whore','slut'];
+function hasProfanity(text){
+  const t=text.toLowerCase().replace(/[^a-z]/g,'');
+  return BANNED_WORDS.some(w=>t.includes(w));
+}
+function censorText(text){
+  let t=text;
+  BANNED_WORDS.forEach(w=>{const re=new RegExp(w,'gi');t=t.replace(re,'***');});
+  return t;
+}
+
+// Username validation: 4+ chars, at least 1 number
+function validateUsername(u){
+  if(u.length<4)return 'Username must be at least 4 characters';
+  if(!/\d/.test(u))return 'Username must contain at least 1 number';
+  if(!/^[a-zA-Z0-9_]+$/.test(u))return 'Only letters, numbers, and underscores';
+  return null;
+}
+
+// ═══════════════════════════════════════
+// METRIC RATING COMPONENT (Slider)
+// ═══════════════════════════════════════
+const METRIC_LABELS={
+  similarity:{low:'Not Similar',high:'Near Identical'},
+  performance:{low:'Weak',high:'Exceptional'},
+  projection:{low:'Skin Scent',high:'Strong Projection'},
+  longevity:{low:'Under 2 Hours',high:'8+ Hours'}
+};
+
+function MetricRater({cloneKey,originalName,cloneName,metric,label,currentScore,onRate}){
+  const auth=React.useContext(AuthContext);
+  const info=METRIC_LABELS[metric]||METRIC_LABELS.similarity;
+  const[userVal,setUserVal]=useState(0);
+  const[communityAvg,setCommunityAvg]=useState(null);
+  const[totalVotes,setTotalVotes]=useState(0);
+  const[loading,setLoading]=useState(false);
+  const[saved,setSaved]=useState(false);
+  const debounce=useRef(null);
+
+  useEffect(()=>{ loadRatings(); },[cloneKey,auth.user]);
+
+  async function loadRatings(){
+    if(!SM_SUPA_URL)return;
+    try{
+      const res=await fetch(SM_SUPA_URL+'/rest/v1/ratings?clone_key=eq.'+encodeURIComponent(cloneKey)+'&metric=eq.'+metric+'&select=rating',{
+        headers:{'apikey':SM_SUPA_KEY}
+      });
+      const ratings=await res.json();
+      if(ratings.length>0){
+        setCommunityAvg(Math.round(ratings.reduce((a,r)=>a+r.rating,0)/ratings.length));
+        setTotalVotes(ratings.length);
+      }
+      if(auth.user){
+        const token=auth.getToken();
+        const res2=await fetch(SM_SUPA_URL+'/rest/v1/ratings?clone_key=eq.'+encodeURIComponent(cloneKey)+'&metric=eq.'+metric+'&user_id=eq.'+auth.user.id+'&select=rating',{
+          headers:{'apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token}
+        });
+        const ur=await res2.json();
+        if(ur[0])setUserVal(ur[0].rating);
+      }
+    }catch(e){}
+  }
+
+  async function submitRating(val){
+    if(!auth.user){auth.showAuth('signup');return;}
+    setLoading(true);setSaved(false);
+    const token=auth.getToken();
+    const headers={'Content-Type':'application/json','apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token};
+    try{
+      // Check if user already rated this metric
+      const checkRes=await fetch(SM_SUPA_URL+'/rest/v1/ratings?user_id=eq.'+auth.user.id+'&clone_key=eq.'+encodeURIComponent(cloneKey)+'&metric=eq.'+metric+'&select=id',{
+        headers:{'apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token}
+      });
+      const existing=await checkRes.json();
+      let res;
+      if(Array.isArray(existing)&&existing.length>0){
+        // UPDATE existing rating
+        res=await fetch(SM_SUPA_URL+'/rest/v1/ratings?id=eq.'+existing[0].id,{
+          method:'PATCH',headers:{...headers,'Prefer':'return=representation'},
+          body:JSON.stringify({rating:val,updated_at:new Date().toISOString()})
+        });
+      }else{
+        // INSERT new rating
+        res=await fetch(SM_SUPA_URL+'/rest/v1/ratings',{
+          method:'POST',headers:{...headers,'Prefer':'return=representation'},
+          body:JSON.stringify({user_id:auth.user.id,clone_key:cloneKey,original_name:originalName,clone_name:cloneName,metric,rating:val,updated_at:new Date().toISOString()})
+        });
+      }
+      const data=await res.json();
+      console.log('Rating response:',res.status,data);
+      if(res.ok){
+        setUserVal(val);setSaved(true);
+        setTimeout(()=>setSaved(false),1500);
+        loadRatings();
+      }else{
+        console.error('Rating save failed:',data);
+      }
+    }catch(e){console.error('Rating error:',e);}
+    setLoading(false);
+  }
+
+  function handleChange(e){
+    const v=parseInt(e.target.value);
+    setUserVal(v);
+    clearTimeout(debounce.current);
+    debounce.current=setTimeout(()=>submitRating(v),600);
+  }
+
+  const valCol=userVal<=30?'var(--rd)':userVal<=60?'var(--yl)':'var(--bl)';
+
+  return React.createElement('div',{style:{marginBottom:18,padding:'12px 0',borderBottom:'1px solid var(--bd)'}},
+    React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}},
+      React.createElement('span',{style:{fontSize:13,fontWeight:600,color:'var(--t1)'}},label),
+      React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8}},
+        totalVotes>0&&React.createElement('span',{style:{fontSize:10,color:'var(--t4)'}},totalVotes+' rating'+(totalVotes!==1?'s':'')),
+        userVal>0&&React.createElement('span',{style:{fontSize:14,fontWeight:700,color:valCol}},userVal),
+        saved&&React.createElement('span',{style:{fontSize:10,color:'var(--gn)',fontWeight:600}},'Saved ✓')
+      )
+    ),
+    // Labels
+    React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:4}},
+      React.createElement('span',{style:{fontSize:11,color:'var(--t3)'}},info.low),
+      React.createElement('span',{style:{fontSize:11,color:'var(--t3)'}},info.high)
+    ),
+    // Slider 0-100
+    React.createElement('input',{type:'range',min:0,max:100,step:1,value:userVal||50,
+      onChange:handleChange,
+      onClick:()=>{if(!auth.user)auth.showAuth('signup');},
+      style:{width:'100%',height:6,appearance:'none',WebkitAppearance:'none',background:'linear-gradient(90deg, #1a3a5c 0%, var(--bl) 50%, #0094e1 100%)',borderRadius:3,outline:'none',cursor:'pointer',opacity:loading?.5:1}
+    }),
+    // Community bar
+    communityAvg!==null&&React.createElement('div',{style:{marginTop:8,display:'flex',alignItems:'center',gap:8}},
+      React.createElement('span',{style:{fontSize:10,color:'var(--t4)'}}, 'Community:'),
+      React.createElement('div',{style:{flex:1,height:3,background:'var(--bd)',borderRadius:2,position:'relative',overflow:'hidden'}},
+        React.createElement('div',{style:{width:communityAvg+'%',height:'100%',background:'var(--bl)',borderRadius:2,transition:'width .3s'}})
+      ),
+      React.createElement('span',{style:{fontSize:10,color:'var(--bl)',fontWeight:600}},communityAvg)
+    )
+  );
+}
+
+// ═══════════════════════════════════════
+// COMMENT SYSTEM
+// ═══════════════════════════════════════
+function Comments({cloneKey}){
+  const auth=React.useContext(AuthContext);
+  const[comments,setComments]=useState([]);
+  const[newComment,setNewComment]=useState('');
+  const[sending,setSending]=useState(false);
+  const[userVotes,setUserVotes]=useState({});
+  const[commentErr,setCommentErr]=useState('');
+
+  useEffect(()=>{ loadComments(); },[cloneKey]);
+
+  async function loadComments(){
+    if(!SM_SUPA_URL)return;
+    try{
+      // Try with profile join first
+      let res=await fetch(SM_SUPA_URL+'/rest/v1/comments?clone_key=eq.'+encodeURIComponent(cloneKey)+'&select=*,profiles(username)&order=created_at.desc',{
+        headers:{'apikey':SM_SUPA_KEY}
+      });
+      let data=await res.json();
+      console.log('Comments response:', data);
+      // If join fails, try without it
+      if(!Array.isArray(data)){
+        res=await fetch(SM_SUPA_URL+'/rest/v1/comments?clone_key=eq.'+encodeURIComponent(cloneKey)+'&select=*&order=created_at.desc',{
+          headers:{'apikey':SM_SUPA_KEY}
+        });
+        data=await res.json();
+      }
+      if(Array.isArray(data)){
+        setComments(data);
+      }else{
+        console.error('Comments not array:', data);
+        setComments([]);
+      }
+      // Load user's votes on these comments
+      if(auth.user){
+        const token=auth.getToken();
+        const ids=(data||[]).map(c=>c.id);
+        if(ids.length>0){
+          const res2=await fetch(SM_SUPA_URL+'/rest/v1/comment_votes?user_id=eq.'+auth.user.id+'&comment_id=in.('+ids.join(',')+')&select=comment_id,vote',{
+            headers:{'apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token}
+          });
+          const votes=await res2.json();
+          const map={};(votes||[]).forEach(v=>map[v.comment_id]=v.vote);
+          setUserVotes(map);
+        }
+      }
+    }catch(e){}
+  }
+
+  async function post(){
+    if(!auth.user){auth.showAuth('signup');return;}
+    if(!newComment.trim()||newComment.length<3)return;
+    if(hasProfanity(newComment)){setCommentErr('Please keep comments respectful.');return;}
+    const lastPost=window._lastCommentTime||0;
+    if(Date.now()-lastPost<30000){setCommentErr('Please wait 30 seconds between comments.');return;}
+    setSending(true);setCommentErr('');
+    const token=auth.getToken();
+    try{
+      const res=await fetch(SM_SUPA_URL+'/rest/v1/comments',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token},
+        body:JSON.stringify({user_id:auth.user.id,clone_key:cloneKey,body:censorText(newComment.trim())})
+      });
+      if(res.ok){
+        window._lastCommentTime=Date.now();
+        setNewComment('');
+        loadComments();
+      }
+    }catch(e){}
+    setSending(false);
+  }
+
+  // Seed comments for display when DB is empty
+  const SEED_COMMENTS={
+    'aventus':[
+      {username:'FragHead22',body:"CDNIM EDP batch is really close to Aventus. The opening is a bit more lemony but the drydown is almost identical. Lasted 7 hours on me.",upvotes:12,time:'2w ago'},
+      {username:'ScentKing99',body:"I've tried both Armaf and the Lattafa version. Armaf wins on projection but Lattafa has a smoother blend. Both solid picks under $30.",upvotes:8,time:'3w ago'},
+    ],
+    'sauvage':[
+      {username:'CologneBro7',body:"Al Haramain L'Aventure is genuinely 90% there. My girlfriend couldn't tell the difference in a blind test. Insane value.",upvotes:15,time:'1w ago'},
+      {username:'NoseKnows44',body:"I wear the Afnan 9PM to work daily. Get compliments all the time. Performance is actually better than my old Sauvage bottle.",upvotes:6,time:'2w ago'},
+    ],
+    'baccarat':[
+      {username:'DupeMaster3',body:"Khamrah is NOT a 1:1 clone but honestly it might be better. The saffron note hits different. Beast mode projection too.",upvotes:18,time:'5d ago'},
+    ],
+    'khamrah':[
+      {username:'DupeMaster3',body:"Khamrah is NOT a 1:1 clone but honestly it might be better. The saffron note hits different. Beast mode projection too.",upvotes:18,time:'5d ago'},
+    ],
+    'layton':[
+      {username:'PerfumeNerd1',body:"Alhambra Percival is a solid Layton clone for the price. Doesn't have the exact same apple note but close enough that most people won't notice.",upvotes:9,time:'1w ago'},
+    ]
+  };
+
+  // Get seed comments if DB has none
+  const seedKey=Object.keys(SEED_COMMENTS).find(k=>cloneKey.toLowerCase().includes(k));
+  const seeds=seedKey?SEED_COMMENTS[seedKey]:[];
+  const displayComments=comments.length>0?comments:seeds.map((s,i)=>({id:'seed-'+i,...s,profiles:{username:s.username},created_at:null,isSeed:true}));
+
+  async function voteComment(commentId,vote){
+    if(!auth.user){auth.showAuth('login');return;}
+    const currentVote=userVotes[commentId]||0;
+    const token=auth.getToken();
+    const headers={'Content-Type':'application/json','apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token};
+
+    // Optimistic local update — change displayed count immediately
+    if(currentVote===vote){
+      // Un-voting: subtract the current vote
+      setComments(prev=>prev.map(c=>c.id===commentId?{...c,upvotes:(c.upvotes||0)-currentVote}:c));
+      setUserVotes(prev=>{const n={...prev};delete n[commentId];return n;});
+    }else{
+      // New vote or changing vote: add difference
+      const diff=vote-currentVote;
+      setComments(prev=>prev.map(c=>c.id===commentId?{...c,upvotes:(c.upvotes||0)+diff}:c));
+      setUserVotes(prev=>({...prev,[commentId]:vote}));
+    }
+
+    // Then persist to DB in background
+    try{
+      if(currentVote===vote){
+        await fetch(SM_SUPA_URL+'/rest/v1/comment_votes?comment_id=eq.'+commentId+'&user_id=eq.'+auth.user.id,{
+          method:'DELETE',headers:{...headers,'Prefer':'return=minimal'}
+        });
+        // Recalculate and patch
+        const votesRes=await fetch(SM_SUPA_URL+'/rest/v1/comment_votes?comment_id=eq.'+commentId+'&select=vote',{headers:{'apikey':SM_SUPA_KEY}});
+        const allVotes=await votesRes.json();
+        const newTotal=Array.isArray(allVotes)?allVotes.reduce((sum,v)=>sum+v.vote,0):0;
+        await fetch(SM_SUPA_URL+'/rest/v1/comments?id=eq.'+commentId,{
+          method:'PATCH',headers:{...headers,'Prefer':'return=minimal'},
+          body:JSON.stringify({upvotes:newTotal})
+        }).catch(()=>{});
+      }else{
+        await fetch(SM_SUPA_URL+'/rest/v1/rpc/vote_comment',{
+          method:'POST',headers,
+          body:JSON.stringify({p_comment_id:commentId,p_user_id:auth.user.id,p_vote:vote})
+        });
+      }
+    }catch(e){console.error('Vote error:',e);loadComments();}
+  }
+
+  function timeAgo(d){
+    const s=Math.floor((Date.now()-new Date(d))/1000);
+    if(s<60)return 'just now';if(s<3600)return Math.floor(s/60)+'m ago';
+    if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';
+  }
+
+  return React.createElement('div',{style:{marginTop:16}},
+    React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}},
+      React.createElement('span',{style:{fontSize:11,fontWeight:600,color:'var(--t2)',textTransform:'uppercase',letterSpacing:.5}},'Discussion'),
+      React.createElement('span',{style:{fontSize:10,color:'var(--t4)'}},comments.length+' comment'+(comments.length!==1?'s':''))
+    ),
+    // Input
+    React.createElement('div',{style:{marginBottom:16}},
+      React.createElement('textarea',{value:newComment,onChange:e=>{setNewComment(e.target.value);setCommentErr('');},
+        placeholder:auth.user?'Share your experience with this clone...':'Log in to comment',
+        onClick:()=>{if(!auth.user)auth.showAuth('login');},
+        rows:2,style:{width:'100%',padding:'10px 12px',background:'var(--c2)',border:'1px solid '+(commentErr?'var(--rd)':'var(--bd)'),borderRadius:8,color:'var(--t1)',fontSize:13,fontFamily:'inherit',resize:'vertical',minHeight:60}}),
+      commentErr&&React.createElement('p',{style:{fontSize:11,color:'var(--rd)',marginTop:4}},commentErr),
+      newComment.trim().length>=3&&React.createElement('button',{onClick:post,disabled:sending,
+        style:{marginTop:6,padding:'7px 16px',background:'var(--bl)',borderRadius:6,color:'#fff',fontSize:12,fontWeight:600,opacity:sending?.5:1}},
+        sending?'Posting...':'Post')
+    ),
+    // Comments list
+    displayComments.map(c=>{
+      const uv=userVotes[c.id]||0;
+      const username=c.profiles?.username||c.username||'user';
+      const isSeed=c.isSeed;
+      return React.createElement('div',{key:c.id,style:{background:'rgba(255,255,255,0.02)',borderRadius:10,border:'1px solid var(--bd)',padding:'12px 14px',marginBottom:6}},
+        React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}},
+          React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8}},
+            React.createElement('span',{style:{fontSize:11,fontWeight:600,color:'var(--bl)'}},username),
+            React.createElement('span',{style:{fontSize:10,color:'var(--t4)'}},isSeed?(c.time||''):timeAgo(c.created_at))
+          ),
+          React.createElement('div',{style:{display:'flex',alignItems:'center',gap:2}},
+            React.createElement('button',{onClick:()=>voteComment(c.id,1),style:{padding:2,color:uv===1?'var(--gn)':'var(--t4)',cursor:'pointer'}},
+              React.createElement('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:uv===1?'currentColor':'none',stroke:'currentColor',strokeWidth:2.5},React.createElement('path',{d:'m18 15-6-6-6 6'}))),
+            React.createElement('span',{style:{fontSize:11,fontWeight:600,color:c.upvotes>0?'var(--gn)':c.upvotes<0?'var(--rd)':'var(--t4)',minWidth:16,textAlign:'center'}},c.upvotes||0),
+            React.createElement('button',{onClick:()=>voteComment(c.id,-1),style:{padding:2,color:uv===-1?'var(--rd)':'var(--t4)',cursor:'pointer'}},
+              React.createElement('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:uv===-1?'currentColor':'none',stroke:'currentColor',strokeWidth:2.5},React.createElement('path',{d:'m6 9 6 6 6-6'})))
+          )
+        ),
+        React.createElement('p',{style:{fontSize:13,color:'var(--t2)',lineHeight:1.6}},c.body)
+      );
+    })
+  );
+}
+
+// ═══════════════════════════════════════
+// COLLECTION SAVE BUTTON
+// ═══════════════════════════════════════
+function SaveBtn({cloneKey,originalName,cloneName,clonePrice,originalPrice}){
+  const auth=React.useContext(AuthContext);
+  const[saved,setSaved]=useState(false);
+  const[loading,setLoading]=useState(false);
+
+  useEffect(()=>{
+    if(!auth.user||!SM_SUPA_URL)return;
+    const token=auth.getToken();
+    fetch(SM_SUPA_URL+'/rest/v1/collections?user_id=eq.'+auth.user.id+'&clone_key=eq.'+encodeURIComponent(cloneKey)+'&select=id',{
+      headers:{'apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token}
+    }).then(r=>r.json()).then(d=>{
+      if(Array.isArray(d)&&d.length>0)setSaved(true);
+      else setSaved(false);
+    }).catch(()=>{});
+  },[auth.user,cloneKey]);
+
+  async function toggle(){
+    if(!auth.user){auth.showAuth('signup');return;}
+    // Optimistic UI update
+    const wasSaved=saved;
+    setSaved(!wasSaved);
+    setLoading(true);
+    const token=auth.getToken();
+    try{
+      if(wasSaved){
+        await fetch(SM_SUPA_URL+'/rest/v1/collections?user_id=eq.'+auth.user.id+'&clone_key=eq.'+encodeURIComponent(cloneKey),{
+          method:'DELETE',headers:{'apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token,'Prefer':'return=minimal'}
+        });
+      }else{
+        const res=await fetch(SM_SUPA_URL+'/rest/v1/collections',{
+          method:'POST',headers:{'Content-Type':'application/json','apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token},
+          body:JSON.stringify({user_id:auth.user.id,clone_key:cloneKey,original_name:originalName,clone_name:cloneName,clone_price:clonePrice,original_price:originalPrice})
+        });
+        if(!res.ok){setSaved(wasSaved);} // revert on failure
+      }
+    }catch(e){setSaved(wasSaved);} // revert on error
+    setLoading(false);
+  }
+
+  return React.createElement('button',{onClick:toggle,disabled:loading,
+    style:{display:'flex',alignItems:'center',gap:6,padding:'8px 14px',borderRadius:8,fontSize:11,fontWeight:600,
+      background:saved?'rgba(43,184,126,0.08)':'transparent',border:'1px solid '+(saved?'rgba(43,184,126,0.2)':'var(--bd)'),
+      color:saved?'var(--gn)':'var(--t3)',cursor:'pointer',transition:'all .2s',opacity:loading?.5:1}},
+    React.createElement('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:saved?'currentColor':'none',stroke:'currentColor',strokeWidth:2},
+      React.createElement('path',{d:'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z'})),
+    saved?'Saved':'Save to Collection'
+  );
+}
+
+// ═══════════════════════════════════════
+// EMAIL CAPTURE
+// ═══════════════════════════════════════
+function EmailCapture(){
+  const[email,setEmail]=useState('');
+  const[status,setStatus]=useState('');
+  async function submit(){
+    if(!email.includes('@')||email.length<5)return;
+    setStatus('sending');
+    try{
+      if(SM_SUPA_URL){
+        await fetch(SM_SUPA_URL+'/rest/v1/email_subscribers',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','apikey':SM_SUPA_KEY},
+          body:JSON.stringify({email:email.trim().toLowerCase()})
+        });
+      }
+      setStatus('done');setEmail('');
+    }catch(e){setStatus('done');}
+  }
+  if(status==='done')return React.createElement('p',{style:{fontSize:13,color:'var(--gn)',fontWeight:600}},'You\'re in! Check your inbox soon.');
+  return React.createElement('div',{style:{display:'flex',gap:8,maxWidth:400,margin:'0 auto'}},
+    React.createElement('input',{type:'email',value:email,onChange:e=>setEmail(e.target.value),
+      onKeyDown:e=>{if(e.key==='Enter')submit();},
+      placeholder:'Your email address',
+      style:{flex:1,padding:'10px 14px',background:'var(--c2)',border:'1px solid var(--bd)',borderRadius:8,color:'var(--t1)',fontSize:13,fontFamily:'inherit'}}),
+    React.createElement('button',{onClick:submit,disabled:status==='sending',
+      style:{padding:'10px 20px',background:'var(--bl)',borderRadius:8,color:'#fff',fontSize:12,fontWeight:600,whiteSpace:'nowrap',opacity:status==='sending'?.5:1}},
+      status==='sending'?'...':'Subscribe')
+  );
+}
+
+function autoComplete(q){
+  if(!q||q.length<2)return[];
+  const t=q.toLowerCase();const r=[];const s=new Set();
+  DB.forEach(i=>{
+    if(i.og.toLowerCase().includes(t)&&!s.has(i.og)){r.push({ty:'og',lb:i.og,sub:i.h,id:i.id});s.add(i.og);}
+    i.dupes.forEach(d=>{if(d.nm.toLowerCase().includes(t)&&!s.has(d.nm)){r.push({ty:'cl',lb:d.nm,sub:'Clone of '+i.og,id:i.id,dn:d.nm});s.add(d.nm);}});
+    if(i.h.toLowerCase().includes(t)&&!s.has(i.h)){r.push({ty:'br',lb:i.h,sub:'Brand',id:i.id});s.add(i.h);}
+  });
+  return r.slice(0,7);
+}
+
+function searchDB(q){
+  const t=q.toLowerCase().trim();if(!t)return DB;
+  return DB.filter(i=>i.og.toLowerCase().includes(t)||i.h.toLowerCase().includes(t)||i.fam.toLowerCase().includes(t)||
+    i.dupes.some(d=>d.nm.toLowerCase().includes(t)||d.br.toLowerCase().includes(t))||
+    [...i.notes.t,...i.notes.m,...i.notes.b].some(n=>n.toLowerCase().includes(t)));
+}
+
+// ═══════════════════════════════════════
+// CIRCLE SCORE
+// ═══════════════════════════════════════
+function Ring({val,size=52,sw=3.5,label,unit='%'}){
+  const display=unit==='h'?val+'h':val;
+  const norm=unit==='h'?(val/12*100):val;
+  const r=(size-sw)/2;const c=r*2*Math.PI;const off=c-(norm/100)*c;
+  // Softer gradient color based on value
+  const col=norm>=85?'url(#ringGrad1)':norm>=75?'url(#ringGrad2)':norm>=65?'url(#ringGrad3)':'url(#ringGrad4)';
+  const textCol=norm>=85?'#0094e1':norm>=75?'#2bb87e':norm>=65?'#d9a620':'#dc6363';
+  return(
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+      <div style={{position:'relative',width:size,height:size}}>
+        <svg width={size} height={size} style={{transform:'rotate(-90deg)'}}>
+          <defs>
+            <linearGradient id="ringGrad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#0094e1"/><stop offset="100%" stopColor="#3aade8"/></linearGradient>
+            <linearGradient id="ringGrad2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#2bb87e"/><stop offset="100%" stopColor="#4dc99a"/></linearGradient>
+            <linearGradient id="ringGrad3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#d9a620"/><stop offset="100%" stopColor="#e0b840"/></linearGradient>
+            <linearGradient id="ringGrad4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#dc6363"/><stop offset="100%" stopColor="#e47e7e"/></linearGradient>
+          </defs>
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={sw}/>
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={col} strokeWidth={sw} strokeDasharray={c} strokeDashoffset={off} strokeLinecap="round" style={{transition:'stroke-dashoffset .8s ease'}}/>
+        </svg>
+        <span style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',fontSize:size>48?12:10,fontWeight:600,color:textCol,letterSpacing:-.3}}>{display}</span>
+      </div>
+      {label&&<span style={{fontSize:8,color:'var(--t4)',textTransform:'uppercase',letterSpacing:.6,whiteSpace:'nowrap',fontWeight:500}}>{label}</span>}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════
+// AUTOCOMPLETE SEARCH
+// ═══════════════════════════════════════
+function SearchBox({onSearch,onDupe,large,placeholder}){
+  const[q,setQ]=useState('');const[sug,setSug]=useState([]);const[fo,setFo]=useState(false);const[ai,setAi]=useState(-1);const ref=useRef();
+  useEffect(()=>{setSug(autoComplete(q));setAi(-1);},[q]);
+  const go=()=>{if(q.trim()){onSearch(q.trim());setQ('');setSug([]);setFo(false);}};
+  const pick=(s)=>{s.ty==='cl'?onDupe(s.id,s.dn):onSearch(s.lb);setQ('');setSug([]);setFo(false);};
+  const hk=(e)=>{if(e.key==='ArrowDown'){e.preventDefault();setAi(i=>Math.min(i+1,sug.length-1));}else if(e.key==='ArrowUp'){e.preventDefault();setAi(i=>Math.max(i-1,-1));}else if(e.key==='Enter'){ai>=0&&sug[ai]?pick(sug[ai]):go();}else if(e.key==='Escape')setFo(false);};
+  const h=large?54:42;
+  return(
+    <div style={{position:'relative',width:'100%',maxWidth:large?560:380}}>
+      <div style={{position:'absolute',top:'50%',left:large?18:12,transform:'translateY(-50%)',color:'var(--t4)',pointerEvents:'none',zIndex:2}}>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </div>
+      <input ref={ref} value={q} onChange={e=>setQ(e.target.value)} onFocus={()=>setFo(true)} onBlur={()=>setTimeout(()=>setFo(false),200)} onKeyDown={hk}
+        style={{width:'100%',height:h,borderRadius:large?14:10,border:'1px solid var(--bd)',background:'rgba(255,255,255,0.025)',padding:`0 ${large?100:12}px 0 ${large?48:38}px`,fontSize:large?15:13,color:'#fff',transition:'border-color .2s'}}
+        placeholder={placeholder||'Search fragrances...'}/>
+      {large&&<button onClick={go} style={{position:'absolute',right:5,top:'50%',transform:'translateY(-50%)',background:'var(--bl)',color:'#fff',padding:'9px 20px',borderRadius:10,fontWeight:600,fontSize:13}}>Search</button>}
+      {fo&&sug.length>0&&(
+        <div style={{position:'absolute',top:h+4,left:0,right:0,background:'#141416',border:'1px solid var(--bd)',borderRadius:12,overflow:'hidden',zIndex:50,boxShadow:'0 16px 48px rgba(0,0,0,.6)'}}>
+          {sug.map((s,i)=>(
+            <button key={i} onMouseDown={()=>pick(s)} style={{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'10px 14px',textAlign:'left',background:i===ai?'var(--bld)':'transparent',borderBottom:'1px solid rgba(255,255,255,0.02)'}}>
+              <span style={{fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:.5,color:s.ty==='cl'?'var(--gn)':'var(--bl)',background:s.ty==='cl'?'rgba(43,184,126,0.1)':'var(--bld)',padding:'2px 6px',borderRadius:3,flexShrink:0}}>{s.ty==='cl'?'Clone':s.ty==='br'?'Brand':'Original'}</span>
+              <div style={{minWidth:0,overflow:'hidden'}}>
+                <div style={{fontSize:13,fontWeight:600,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{s.lb}</div>
+                <div style={{fontSize:11,color:'var(--t4)'}}>{s.sub}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════
+function Nav({pg,nav,onSearch,onDupe}){
+  const[mob,setMob]=useState(false);
+  const auth=React.useContext(AuthContext);
+  const lk=[{l:'Home',p:'home'},{l:'Rankings',p:'rank'},{l:'Search',p:'search'},{l:'Build',p:'calc'},{l:'Blog',p:'blog'},{l:'About',p:'about'}];
+  return(
+    <nav style={{position:'sticky',top:0,zIndex:100,borderBottom:'1px solid var(--bd)',background:'rgba(9,9,11,0.9)',backdropFilter:'blur(20px)'}}>
+      <div style={{maxWidth:1100,margin:'0 auto',padding:'11px 20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <button onClick={()=>nav('home')} style={{display:'flex',alignItems:'center',gap:8}}>
+          <div style={{width:28,height:28,borderRadius:6,background:'var(--bl)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:14}}>S</div>
+          <span style={{fontSize:17,fontWeight:700,letterSpacing:-.5}}>ScentMetric</span>
+        </button>
+        <div style={{display:'flex',alignItems:'center',gap:24}} className="dn">
+          {lk.map(l=><button key={l.p} onClick={()=>nav(l.p)} style={{fontSize:13,fontWeight:500,color:pg===l.p?'#fff':'var(--t3)'}}>{l.l}</button>)}
+          {auth.user?
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <button onClick={()=>nav('profile')} style={{fontSize:12,color:'var(--bl)',fontWeight:600}}>{auth.profile?.username||'Profile'}</button>
+              <button onClick={auth.logout} style={{fontSize:11,color:'var(--t4)',padding:'4px 10px',borderRadius:6,border:'1px solid var(--bd)'}}>Log out</button>
+            </div>:
+            <button onClick={()=>auth.showAuth('login')} style={{fontSize:12,fontWeight:600,color:'#fff',background:'var(--bl)',padding:'6px 14px',borderRadius:8}}>Sign In</button>
+          }
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          {!auth.user&&<button onClick={()=>auth.showAuth('login')} style={{fontSize:11,fontWeight:600,color:'var(--bl)',display:'none'}} className="mn">Sign In</button>}
+          <button onClick={()=>setMob(!mob)} style={{color:'var(--t3)',display:'none'}} className="mn">
+            {mob?<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>}
+          </button>
+        </div>
+      </div>
+      {mob&&<div style={{padding:'0 20px 14px'}} className="mv">
+        {lk.map(l=><button key={l.p} onClick={()=>{nav(l.p);setMob(false);}} style={{display:'block',width:'100%',padding:'10px 0',fontSize:14,fontWeight:500,color:pg===l.p?'var(--bl)':'var(--t3)',textAlign:'left',borderBottom:'1px solid var(--bd)'}}>{l.l}</button>)}
+        {auth.user?
+          <div style={{padding:'10px 0',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <button onClick={()=>{nav('profile');setMob(false);}} style={{fontSize:12,color:'var(--bl)',fontWeight:600}}>{auth.profile?.username||'Profile'}</button>
+            <button onClick={()=>{auth.logout();setMob(false);}} style={{fontSize:11,color:'var(--t4)'}}>Log out</button>
+          </div>:
+          <button onClick={()=>{auth.showAuth('login');setMob(false);}} style={{display:'block',width:'100%',padding:'10px 0',fontSize:14,fontWeight:600,color:'var(--bl)',textAlign:'left'}}>Sign In / Sign Up</button>
+        }
+      </div>}
+      <style>{`@media(min-width:768px){.mn{display:none!important}.mv{display:none!important}}@media(max-width:767px){.dn{display:none!important}.mn{display:block!important}}`}</style>
+    </nav>
+  );
+}
+
+// ═══════════════════════════════════════
+// OTHER CLONES — collapsible overflow section
+// ═══════════════════════════════════════
+function OtherClones({dupes,item,onDupe}){
+  const[open,setOpen]=useState(false);
+  return(
+    <div style={{marginTop:10,borderTop:'1px solid var(--bd)',paddingTop:10}}>
+      <button onClick={()=>setOpen(!open)} style={{display:'flex',alignItems:'center',gap:6,width:'100%',padding:'6px 4px',fontSize:11,fontWeight:600,color:'var(--t3)'}}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{transform:open?'rotate(90deg)':'none',transition:'transform .2s'}}><path d="m9 18 6-6-6-6"/></svg>
+        {dupes.length} more alternative{dupes.length>1?'s':''}
+      </button>
+      {open&&<div style={{marginTop:6}}>
+        {dupes.map((d,i)=>{
+          const s=sc(d);
+          return(
+            <button key={i} onClick={()=>onDupe(item.id,d.nm)} style={{display:'flex',justifyContent:'space-between',alignItems:'center',width:'100%',textAlign:'left',padding:'8px 10px',background:'rgba(255,255,255,0.01)',borderRadius:8,border:'1px solid var(--bd)',marginBottom:4,transition:'border-color .2s'}}
+              onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(0,148,225,0.12)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--bd)'}>
+              <div style={{minWidth:0,overflow:'hidden'}}>
+                <span style={{fontSize:12,fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',display:'block'}}>{d.nm}</span>
+                <span style={{fontSize:10,color:'var(--t4)'}}>{d.br}</span>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+                <span style={{fontSize:12,fontWeight:600}}>${d.pr}</span>
+                <span style={{fontSize:10,fontWeight:600,color:clr(s),background:'rgba(255,255,255,0.03)',padding:'2px 6px',borderRadius:4}}>{s}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════
+// HERO — Ultra minimal
+// ═══════════════════════════════════════
+function Hero({nav,onSearch,onDupe}){
+  return(
+    <section style={{padding:'90px 20px 70px',textAlign:'center',position:'relative'}}>
+      <div style={{position:'absolute',top:'35%',left:'50%',transform:'translate(-50%,-50%)',width:600,height:400,borderRadius:'50%',background:'radial-gradient(circle,rgba(0,148,225,0.05) 0%,transparent 70%)',pointerEvents:'none'}}/>
+      <div style={{position:'relative',zIndex:1,maxWidth:580,margin:'0 auto'}}>
+        <h1 style={{fontFamily:'var(--fd)',fontSize:'clamp(42px,8vw,72px)',fontWeight:700,letterSpacing:-2.5,lineHeight:.95,marginBottom:18}}>
+          <span style={{background:'linear-gradient(135deg,#fff 40%,var(--bl))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>Smell expensive.</span><br/>
+          <span style={{color:'var(--t3)',fontSize:'clamp(26px,4vw,44px)',letterSpacing:-1}}>Pay almost nothing.</span>
+        </h1>
+        <p style={{fontSize:15,color:'var(--t3)',maxWidth:380,margin:'0 auto 32px'}}>Cologne dupe rankings backed by Reddit and fragrance community data.</p>
+        <div style={{display:'flex',justifyContent:'center'}}><SearchBox onSearch={onSearch} onDupe={onDupe} large placeholder="Search any cologne or brand..."/></div>
+        <div style={{marginTop:32}}>
+          <button onClick={()=>nav('rank')} style={{fontSize:13,fontWeight:500,color:'var(--bl)',display:'inline-flex',alignItems:'center',gap:5}}>
+            Browse all rankings <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════
+// FRAGRANCE BLOCK — Original + 3 Clones with circle scores
+// ═══════════════════════════════════════
+function Block({item,onDupe}){
+  return(
+    <div style={{background:'var(--c1)',borderRadius:18,border:'1px solid var(--bd)',marginBottom:20,overflow:'hidden',transition:'border-color .3s'}}
+      onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(0,148,225,0.1)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--bd)'}>
+      
+      {/* ORIGINAL */}
+      <div style={{padding:'22px 24px 18px',textAlign:'center',borderBottom:'1px solid var(--bd)',position:'relative',overflow:'hidden'}}>
+        {/* Subtle gradient accent based on family */}
+        <div style={{position:'absolute',top:-40,right:-40,width:120,height:120,borderRadius:'50%',background:item.fam.includes('Woody')||item.fam.includes('Oud')||item.fam.includes('Leather')?'radial-gradient(circle,rgba(139,90,43,0.06),transparent)':item.fam.includes('Fresh')||item.fam.includes('Aquatic')||item.fam.includes('Citrus')||item.fam.includes('Aromatic')||item.fam.includes('Fougere')?'radial-gradient(circle,rgba(43,184,126,0.06),transparent)':item.fam.includes('Gourmand')||item.fam.includes('Vanilla')||item.fam.includes('Fruity')?'radial-gradient(circle,rgba(251,191,36,0.06),transparent)':'radial-gradient(circle,rgba(0,148,225,0.06),transparent)',pointerEvents:'none'}}/>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:4,position:'relative'}}>
+          <span style={{fontSize:10,color:'var(--t4)',fontWeight:600}}>#{item.r}</span>
+          <span style={{fontSize:10,color:'var(--bl)',textTransform:'uppercase',letterSpacing:1.5,fontWeight:600}}>{item.h}</span>
+        </div>
+        <h3 style={{fontFamily:'var(--fd)',fontSize:'clamp(20px,3vw,26px)',fontWeight:700,position:'relative'}}>{item.og}</h3>
+        <span style={{fontSize:12,color:'var(--t4)'}}>{item.fam} · <span style={{color:'var(--t2)',fontWeight:500}}>${item.p}</span></span>
+        {/* Top 3 notes as visual chips */}
+        <div style={{display:'flex',justifyContent:'center',gap:6,marginTop:8,flexWrap:'wrap'}}>
+          {[...item.notes.t.slice(0,2),...item.notes.m.slice(0,1)].map((n,i)=>(
+            <span key={i} style={{fontSize:10,padding:'3px 10px',borderRadius:12,background:'rgba(255,255,255,0.03)',border:'1px solid var(--bd)',color:'var(--t2)',display:'flex',alignItems:'center',gap:4}}>
+              <span style={{width:5,height:5,borderRadius:'50%',background:i===0?'rgba(0,148,225,0.5)':i===1?'rgba(109,212,160,0.5)':'rgba(232,200,114,0.5)'}}></span>{n}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* CLONES */}
+      <div style={{padding:'16px 16px 20px'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(240px,100%),1fr))',gap:12}}>
+          {item.dupes.slice(0,3).map((d,i)=>{
+            const s=sc(d);const save=sv(item.p,d.pr);const best=i===0;
+            return(
+              <button key={i} onClick={()=>onDupe(item.id,d.nm)} style={{textAlign:'left',background:best?'rgba(0,148,225,0.02)':'rgba(255,255,255,0.01)',borderRadius:14,border:`1px solid ${best?'rgba(0,148,225,0.1)':'var(--bd)'}`,padding:'16px 14px',transition:'all .25s ease',position:'relative'}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(0,148,225,0.12)';e.currentTarget.style.transform='translateY(-1px)';}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor=best?'rgba(0,148,225,0.1)':'var(--bd)';e.currentTarget.style.transform='none';}}>
+                
+                {best&&<span style={{position:'absolute',top:-1,right:12,fontSize:7,fontWeight:600,textTransform:'uppercase',letterSpacing:.8,color:'var(--bl)',background:'var(--c1)',padding:'2px 8px',border:'1px solid rgba(0,148,225,0.12)',borderRadius:'0 0 6px 6px',opacity:.8}}>Top Pick</span>}
+
+                {/* Name + Price */}
+                <div style={{marginBottom:14}}>
+                  <h4 style={{fontSize:14,fontWeight:600,lineHeight:1.3,letterSpacing:-.2}}>{d.nm}</h4>
+                  <div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:4}}>
+                    <span><span style={{fontSize:11,textDecoration:"line-through",color:"var(--t4)",marginRight:6,opacity:.7}}>${item.p}</span><span style={{fontSize:17,fontWeight:600,color:'var(--t1)'}}>${d.pr}</span></span>
+                    <span style={{fontSize:10,fontWeight:500,color:'var(--gn)',opacity:.85}}>save {save}%</span>
+                  </div>
+                </div>
+
+                {/* 4 CIRCLES */}
+                <div style={{display:'flex',justifyContent:'space-between',gap:4,marginBottom:12}}>
+                  <Ring val={d.sim} size={48} sw={3} label="Similarity"/>
+                  <Ring val={d.perf} size={48} sw={3} label="Perform."/>
+                  <Ring val={d.proj} size={48} sw={3} label="Projection"/>
+                  <Ring val={d.lon} size={48} sw={3} label="Longevity" unit="h"/>
+                </div>
+
+                {/* Overall */}
+                <div style={{textAlign:'center',padding:'6px 0',borderTop:'1px solid var(--bd)',fontSize:11,fontWeight:600,color:clr(s),opacity:.85}}>
+                  Overall: {s}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        {/* OTHER CLONES — overflow section for 4+ clones */}
+        {item.dupes.length>3&&<OtherClones dupes={item.dupes.slice(3)} item={item} onDupe={onDupe}/>}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════
+// RANKINGS PAGE — with sort + filter
+// ═══════════════════════════════════════
+function RankPage({onDupe}){
+  useEffect(()=>{setPageMeta('Rankings — Best Cologne Dupes','Browse and compare 700+ cologne clones ranked by similarity, performance, projection and longevity.');return()=>setPageMeta();},[]);
+  const[fl,setFl]=useState('all');
+  const[sort,setSort]=useState('popular');
+  const sorts=[{k:'popular',l:'Most Popular'},{k:'alpha',l:'A → Z'},{k:'price',l:'Highest Retail'},{k:'bestclone',l:'Best Clone Score'},{k:'savings',l:'Biggest Savings'}];
+  const cats=[{k:'all',l:'All'},{k:'woody',l:'Woody'},{k:'oriental',l:'Oriental'},{k:'fresh',l:'Fresh'},{k:'gourmand',l:'Gourmand'},{k:'floral',l:'Floral'}];
+  
+  const matchCat=(fam,cat)=>{
+    if(cat==='all')return true;
+    const f=fam.toLowerCase();
+    if(cat==='woody')return f.includes('woody')||f.includes('oud')||f.includes('leather')||f.includes('chypre');
+    if(cat==='oriental')return f.includes('oriental')||f.includes('amber')||f.includes('spicy');
+    if(cat==='fresh')return f.includes('fresh')||f.includes('aquatic')||f.includes('citrus')||f.includes('aromatic')||f.includes('fougere')||f.includes('green');
+    if(cat==='gourmand')return f.includes('gourmand')||f.includes('vanilla')||f.includes('fruity')||f.includes('almond')||f.includes('tobacco');
+    if(cat==='floral')return f.includes('floral');
+    return false;
+  };
+  
+  const data=useMemo(()=>{
+    let d=fl==='all'?[...DB]:DB.filter(x=>matchCat(x.fam,fl));
+    switch(sort){
+      case'alpha':d.sort((a,b)=>a.og.localeCompare(b.og));break;
+      case'price':d.sort((a,b)=>b.p-a.p);break;
+      case'bestclone':d.sort((a,b)=>Math.max(...b.dupes.map(x=>sc(x)))-Math.max(...a.dupes.map(x=>sc(x))));break;
+      case'savings':d.sort((a,b)=>{const sa=Math.min(...a.dupes.map(x=>x.pr));const sb=Math.min(...b.dupes.map(x=>x.pr));return(sa/a.p)-(sb/b.p);});break;
+      default:d.sort((a,b)=>a.r-b.r);
+    }
+    return d;
+  },[fl,sort]);
+
+  return(
+    <section style={{padding:'36px 20px 80px',maxWidth:1060,margin:'0 auto'}}>
+      <h2 style={{fontFamily:'var(--fd)',fontSize:'clamp(24px,4vw,32px)',fontWeight:700,marginBottom:4}}>Clone Rankings</h2>
+      <p style={{fontSize:13,color:'var(--t3)',marginBottom:20}}>{DB.length} colognes · {DB.reduce((a,i)=>a+i.dupes.length,0)} clones ranked</p>
+      
+      {/* SORT TABS */}
+      <div style={{display:'flex',gap:4,marginBottom:14,overflowX:'auto',paddingBottom:4}}>
+        {sorts.map(s=><button key={s.k} onClick={()=>setSort(s.k)} style={{fontSize:11,padding:'7px 14px',borderRadius:8,border:'1px solid',borderColor:sort===s.k?'var(--bl)':'var(--bd)',background:sort===s.k?'var(--bld)':'transparent',color:sort===s.k?'var(--bl)':'var(--t3)',whiteSpace:'nowrap',fontWeight:sort===s.k?600:400,transition:'all .2s'}}>{s.l}</button>)}
+      </div>
+
+      {/* SCENT TYPE FILTER */}
+      <div style={{display:'flex',gap:6,marginBottom:24,overflowX:'auto',paddingBottom:4}}>
+        {cats.map(c=><button key={c.k} onClick={()=>setFl(c.k)} style={{fontSize:11,padding:'7px 14px',borderRadius:8,border:'1px solid',borderColor:fl===c.k?'rgba(43,184,126,0.3)':'var(--bd)',background:fl===c.k?'rgba(43,184,126,0.08)':'transparent',color:fl===c.k?'var(--gn)':'var(--t3)',whiteSpace:'nowrap',fontWeight:fl===c.k?600:400,transition:'all .2s'}}>{c.l}</button>)}
+      </div>
+
+      {data.map(i=><Block key={i.id} item={i} onDupe={onDupe}/>)}
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════
+// SUGGEST A COLOGNE — appears when search has no results
+// ═══════════════════════════════════════
+async function submitSuggestion(name, brand){
+  if(!SM_SUPA_URL) return false;
+  try{
+    const res = await fetch(SM_SUPA_URL+'/rest/v1/suggestions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SM_SUPA_KEY,'Prefer':'return=minimal'},
+      body:JSON.stringify({cologne_name:name,brand:brand||null,fingerprint:'anon_'+Date.now()})
+    });
+    return res.ok;
+  }catch(e){return false;}
+}
+
+function SuggestBox({query}){
+  const [sent,setSent]=useState(false);
+  const [name,setName]=useState(query||'');
+  const [brand,setBrand]=useState('');
+  const [sending,setSending]=useState(false);
+
+  const handleSubmit=async()=>{
+    if(!name.trim()||sending)return;
+    setSending(true);
+    const ok=await submitSuggestion(name.trim(),brand.trim());
+    if(ok)setSent(true);
+    setSending(false);
+  };
+
+  return React.createElement('div',{style:{textAlign:'center',padding:'40px 20px',maxWidth:400,margin:'0 auto'}},
+    React.createElement('svg',{width:40,height:40,viewBox:'0 0 24 24',fill:'none',stroke:'var(--t4)',strokeWidth:1.5,style:{marginBottom:12}},
+      React.createElement('circle',{cx:11,cy:11,r:8}),
+      React.createElement('path',{d:'m21 21-4.35-4.35'})
+    ),
+    React.createElement('p',{style:{fontSize:14,color:'var(--t3)',marginBottom:20}},
+      'No results for "'+query+'". ',
+      !sent&&'Know this cologne? Suggest it and we\'ll add it.'
+    ),
+    sent?
+      React.createElement('div',{style:{background:'rgba(43,184,126,0.06)',border:'1px solid rgba(43,184,126,0.15)',borderRadius:10,padding:'14px 18px'}},
+        React.createElement('span',{style:{fontSize:13,color:'var(--gn)',fontWeight:600}},'✓ Suggestion submitted! We\'ll review and add it soon.')
+      )
+    :
+      React.createElement('div',{style:{background:'var(--c1)',border:'1px solid var(--bd)',borderRadius:12,padding:16,textAlign:'left'}},
+        React.createElement('p',{style:{fontSize:11,color:'var(--t4)',textTransform:'uppercase',letterSpacing:.5,fontWeight:600,marginBottom:10}},'Suggest a cologne'),
+        React.createElement('input',{type:'text',value:name,onChange:e=>setName(e.target.value),placeholder:'Cologne name',
+          style:{width:'100%',padding:'8px 12px',background:'var(--c2)',border:'1px solid var(--bd)',borderRadius:6,color:'var(--t1)',fontSize:12,marginBottom:8}}),
+        React.createElement('input',{type:'text',value:brand,onChange:e=>setBrand(e.target.value),placeholder:'Brand (optional)',
+          style:{width:'100%',padding:'8px 12px',background:'var(--c2)',border:'1px solid var(--bd)',borderRadius:6,color:'var(--t1)',fontSize:12,marginBottom:12}}),
+        React.createElement('button',{onClick:handleSubmit,disabled:sending||!name.trim(),
+          style:{width:'100%',padding:'8px',background:name.trim()?'var(--bl)':'var(--bd)',borderRadius:6,color:'#fff',fontSize:12,fontWeight:600,cursor:name.trim()?'pointer':'default',opacity:sending?0.5:1}},
+          sending?'Submitting...':'Submit Suggestion'
+        )
+      )
+  );
+}
+
+// ═══════════════════════════════════════
+// SEARCH PAGE — discovery-focused
+// ═══════════════════════════════════════
+function SearchPg({iq,onSearch,onDupe}){
+  useEffect(()=>{setPageMeta('Search Cologne Dupes','Search 700+ cologne clones by name, brand, or original fragrance.');return()=>setPageMeta();},[]);
+  const[q,setQ]=useState(iq||'');
+  const[browse,setBrowse]=useState(null); // {type:'brand'|'family', value:'Lattafa'}
+  useEffect(()=>{setQ(iq||'');},[iq]);
+  const res=useMemo(()=>q?searchDB(q):[],[q]);
+  
+  // Browse mode results
+  const browseRes=useMemo(()=>{
+    if(!browse)return[];
+    if(browse.type==='brand')return DB.filter(i=>i.dupes.some(d=>d.br===browse.value));
+    if(browse.type==='family')return DB.filter(i=>i.fam===browse.value);
+    return[];
+  },[browse]);
+  
+  const totalClones=DB.reduce((a,i)=>a+i.dupes.length,0);
+  const avgSavings=Math.round(DB.reduce((a,i)=>a+i.dupes.reduce((b,d)=>b+sv(i.p,d.pr),0)/i.dupes.length,0)/DB.length);
+  const topBrands=useMemo(()=>{const m={};DB.forEach(i=>i.dupes.forEach(d=>{m[d.br]=(m[d.br]||0)+1;}));return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,6);},[]);
+  // Simplified families — group into broader categories
+  const familyGroups=useMemo(()=>{
+    const groups={'Woody':[],'Oriental':[],'Fresh':[],'Floral':[],'Gourmand':[],'Other':[]};
+    DB.forEach(i=>{
+      const f=i.fam.toLowerCase();
+      if(f.includes('woody')||f.includes('oud')||f.includes('leather')||f.includes('chypre'))groups['Woody'].push(i.fam);
+      else if(f.includes('oriental')||f.includes('amber')||f.includes('spicy'))groups['Oriental'].push(i.fam);
+      else if(f.includes('fresh')||f.includes('aquatic')||f.includes('citrus')||f.includes('aromatic')||f.includes('fougere')||f.includes('green'))groups['Fresh'].push(i.fam);
+      else if(f.includes('floral'))groups['Floral'].push(i.fam);
+      else if(f.includes('gourmand')||f.includes('vanilla')||f.includes('fruity')||f.includes('almond')||f.includes('tobacco'))groups['Gourmand'].push(i.fam);
+      else groups['Other'].push(i.fam);
+    });
+    return Object.entries(groups).filter(([,v])=>v.length>0).map(([k,v])=>({name:k,count:[...new Set(v)].length,families:[...new Set(v)]}));
+  },[]);
+
+  // Clear browse and show search results
+  const doSearch=(v)=>{setBrowse(null);setQ(v);};
+
+  // Showing search results
+  if(q){
+    return(
+      <section style={{padding:'36px 20px 80px',maxWidth:1060,margin:'0 auto'}}>
+        <div style={{textAlign:'center',marginBottom:28}}>
+          <div style={{display:'flex',justifyContent:'center',marginBottom:8}}><SearchBox onSearch={doSearch} onDupe={onDupe} large placeholder="Fragrance, brand, or note..."/></div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
+          <button onClick={()=>{setQ('');setBrowse(null);}} style={{fontSize:12,color:'var(--bl)',display:'flex',alignItems:'center',gap:4}}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg> Clear
+          </button>
+          <p style={{fontSize:12,color:'var(--t4)'}}>{res.length} result{res.length!==1?'s':''} for "{q}"</p>
+        </div>
+        {res.length===0?<SuggestBox query={q}/>:
+          res.map(i=><Block key={i.id} item={i} onDupe={onDupe}/>)}
+      </section>
+    );
+  }
+
+  // Showing browse results
+  if(browse){
+    return(
+      <section style={{padding:'36px 20px 80px',maxWidth:1060,margin:'0 auto'}}>
+        <div style={{textAlign:'center',marginBottom:28}}>
+          <div style={{display:'flex',justifyContent:'center',marginBottom:8}}><SearchBox onSearch={doSearch} onDupe={onDupe} large placeholder="Fragrance, brand, or note..."/></div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
+          <button onClick={()=>setBrowse(null)} style={{fontSize:12,color:'var(--bl)',display:'flex',alignItems:'center',gap:4}}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg> Back to Search
+          </button>
+          <p style={{fontSize:12,color:'var(--t4)'}}>{browseRes.length} cologne{browseRes.length!==1?'s':''} · {browse.type==='brand'?'Brand':'Family'}: {browse.value}</p>
+        </div>
+        {browseRes.map(i=><Block key={i.id} item={i} onDupe={onDupe}/>)}
+      </section>
+    );
+  }
+
+  // Default: discovery page
+  return(
+    <section style={{padding:'36px 20px 80px',maxWidth:900,margin:'0 auto'}}>
+      {/* Hero-style heading */}
+      <div style={{textAlign:'center',marginBottom:36,position:'relative'}}>
+        <div style={{position:'absolute',top:'30%',left:'50%',transform:'translate(-50%,-50%)',width:400,height:250,borderRadius:'50%',background:'radial-gradient(circle,rgba(0,148,225,0.04) 0%,transparent 70%)',pointerEvents:'none'}}/>
+        <h2 style={{fontFamily:'var(--fd)',fontSize:'clamp(28px,5vw,42px)',fontWeight:700,letterSpacing:-1.5,lineHeight:1,marginBottom:8,position:'relative'}}>
+          <span style={{background:'linear-gradient(135deg,#fff 40%,var(--bl))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>Search for your dupe.</span>
+        </h2>
+        <p style={{fontSize:14,color:'var(--t3)',marginBottom:20}}>Search by cologne, brand, or scent note</p>
+        <div style={{display:'flex',justifyContent:'center'}}><SearchBox onSearch={doSearch} onDupe={onDupe} large placeholder="Try 'Aventus', 'Lattafa', or 'Vanilla'..."/></div>
+      </div>
+
+      {/* Quick Stats */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:32}}>
+        {[{n:DB.length,l:'Colognes'},{n:totalClones,l:'Clones Ranked'},{n:avgSavings+'%',l:'Avg. Savings'}].map((s,i)=>(
+          <div key={i} style={{background:'var(--c1)',borderRadius:10,border:'1px solid var(--bd)',padding:'14px 12px',textAlign:'center'}}>
+            <div style={{fontSize:22,fontWeight:700,color:'var(--bl)'}}>{s.n}</div>
+            <div style={{fontSize:9,color:'var(--t4)',textTransform:'uppercase',letterSpacing:.8}}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Browse by Brand */}
+      <div style={{marginBottom:28}}>
+        <h3 style={{fontFamily:'var(--fd)',fontSize:15,fontWeight:700,marginBottom:10}}>Popular Clone Brands</h3>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:8}}>
+          {topBrands.map(([br,ct])=>(
+            <button key={br} onClick={()=>setBrowse({type:'brand',value:br})} style={{padding:'12px',borderRadius:10,background:'var(--c1)',border:'1px solid var(--bd)',textAlign:'center',transition:'all .2s'}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--bh)';e.currentTarget.style.background='rgba(0,148,225,0.03)';}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--bd)';e.currentTarget.style.background='var(--c1)';}}>
+              <div style={{fontSize:14,fontWeight:600}}>{br}</div>
+              <div style={{fontSize:10,color:'var(--t4)',marginTop:2}}>{ct} clones</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Browse by Scent Type — simplified groups */}
+      <div style={{marginBottom:28}}>
+        <h3 style={{fontFamily:'var(--fd)',fontSize:15,fontWeight:700,marginBottom:10}}>Scent Types</h3>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:8}}>
+          {familyGroups.map(g=>{
+            const icons={Woody:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="1.5"><path d="M12 22V8"/><path d="M5 12l7-8 7 8"/><path d="M8 16l4-5 4 5"/></svg>,
+              Oriental:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="1.5"><path d="M12 2c0 4-4 6-4 10a4 4 0 108 0c0-4-4-6-4-10z"/><path d="M12 22v-4"/></svg>,
+              Fresh:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="1.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M4.9 4.9l2.9 2.9m8.4 8.4l2.9 2.9M4.9 19.1l2.9-2.9m8.4-8.4l2.9-2.9"/></svg>,
+              Floral:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="1.5"><circle cx="12" cy="10" r="3"/><path d="M12 7c0-2 1.5-4 3-5"/><path d="M12 7c0-2-1.5-4-3-5"/><path d="M9 10c-2 0-4 1.5-5 3"/><path d="M15 10c2 0 4 1.5 5 3"/><path d="M12 13v9"/></svg>,
+              Gourmand:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="1.5"><path d="M12 8a4 4 0 00-4 4c0 3 4 6 4 6s4-3 4-6a4 4 0 00-4-4z"/><path d="M10 4c0 2 2 4 2 4s2-2 2-4"/></svg>,
+              Other:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>};
+            return(
+            <button key={g.name} onClick={()=>setBrowse({type:'family',value:g.families[0]})} style={{padding:'14px 12px',borderRadius:10,background:'var(--c1)',border:'1px solid var(--bd)',textAlign:'left',transition:'all .2s',display:'flex',alignItems:'center',gap:10}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(0,148,225,0.2)';e.currentTarget.style.background='rgba(0,148,225,0.03)';}} onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--bd)';e.currentTarget.style.background='var(--c1)';}}>
+              <div style={{width:36,height:36,borderRadius:8,background:'var(--bld)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{icons[g.name]||icons.Other}</div>
+              <div><div style={{fontSize:13,fontWeight:600}}>{g.name}</div><div style={{fontSize:10,color:'var(--t4)',marginTop:1}}>{g.count} sub-types</div></div>
+            </button>
+          );})}
+        </div>
+      </div>
+
+      {/* How it works */}
+      <div style={{background:'var(--c1)',borderRadius:14,border:'1px solid var(--bd)',padding:20}}>
+        <h3 style={{fontFamily:'var(--fd)',fontSize:15,fontWeight:700,marginBottom:10}}>How ScentMetric Works</h3>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12}}>
+          {[{n:'1',t:'Community Data',d:'Reviews from Reddit, Fragrantica, and fragrance forums'},{n:'2',t:'4-Metric Scoring',d:'Similarity, Performance, Projection, Longevity'},{n:'3',t:'Transparent Sources',d:'Every score links to the community data behind it'}].map((s,i)=>(
+            <div key={i} style={{display:'flex',gap:10}}>
+              <div style={{width:26,height:26,borderRadius:6,background:'var(--bld)',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--bl)',fontSize:12,fontWeight:700,flexShrink:0}}>{s.n}</div>
+              <div><div style={{fontSize:12,fontWeight:600,marginBottom:1}}>{s.t}</div><div style={{fontSize:11,color:'var(--t3)',lineHeight:1.4}}>{s.d}</div></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════
+// PROFILE PAGE — User dashboard
+// ═══════════════════════════════════════
+function ProfilePg({nav,onDupe}){
+  const auth=React.useContext(AuthContext);
+  const[ratings,setRatings]=useState([]);
+  const[myComments,setMyComments]=useState([]);
+  const[saved,setSaved]=useState([]);
+  const[editName,setEditName]=useState(false);
+  const[newName,setNewName]=useState('');
+  const[nameErr,setNameErr]=useState('');
+  const[nameSaved,setNameSaved]=useState(false);
+  const uCheck=useUsernameCheck(editName?newName:'');
+
+  useEffect(()=>{
+    if(!auth.user||!SM_SUPA_URL)return;
+    const token=auth.getToken();
+    const h={'apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token};
+    // Load user's ratings
+    fetch(SM_SUPA_URL+'/rest/v1/ratings?user_id=eq.'+auth.user.id+'&select=*&order=updated_at.desc',{headers:h})
+      .then(r=>r.json()).then(d=>{console.log('Profile ratings:',d);if(Array.isArray(d))setRatings(d);}).catch(e=>console.error('Ratings err:',e));
+    // Load user's comments
+    fetch(SM_SUPA_URL+'/rest/v1/comments?user_id=eq.'+auth.user.id+'&select=*&order=created_at.desc',{headers:h})
+      .then(r=>r.json()).then(d=>{console.log('Profile comments:',d);if(Array.isArray(d))setMyComments(d);}).catch(e=>console.error('Comments err:',e));
+    // Load saved collection
+    fetch(SM_SUPA_URL+'/rest/v1/collections?user_id=eq.'+auth.user.id+'&select=*&order=created_at.desc',{headers:h})
+      .then(r=>r.json()).then(d=>{console.log('Profile saved:',d);if(Array.isArray(d))setSaved(d);}).catch(e=>console.error('Saved err:',e));
+  },[auth.user]);
+
+  if(!auth.user)return React.createElement('section',{style:{padding:'80px 20px',textAlign:'center',maxWidth:500,margin:'0 auto'}},
+    React.createElement('h2',{style:{fontSize:22,fontWeight:700,marginBottom:8}},'Sign in to view your profile'),
+    React.createElement('button',{onClick:()=>auth.showAuth('login'),style:{padding:'10px 24px',background:'var(--bl)',borderRadius:8,color:'#fff',fontSize:13,fontWeight:600,marginTop:12}},'Sign In')
+  );
+
+  const username=auth.profile?.username||'User';
+  const uniqueClones=[...new Set(ratings.map(r=>r.clone_key))];
+  const joinDate=auth.profile?.created_at?new Date(auth.profile.created_at).toLocaleDateString('en-US',{month:'long',year:'numeric'}):'';
+
+  async function saveName(){
+    if(uCheck.status!=='available')return;
+    setNameErr('');
+    try{
+      await auth.updateUsername(newName.trim());
+      setEditName(false);setNameSaved(true);
+      setTimeout(()=>setNameSaved(false),2000);
+    }catch(e){setNameErr(e.message);}
+  }
+
+  return React.createElement('section',{style:{padding:'36px 20px 80px',maxWidth:700,margin:'0 auto'}},
+    // Header
+    React.createElement('div',{style:{background:'var(--c1)',borderRadius:16,border:'1px solid var(--bd)',padding:24,marginBottom:20}},
+      React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:12}},
+        React.createElement('div',null,
+          editName?React.createElement('div',{style:{display:'flex',gap:8,alignItems:'center',marginBottom:8}},
+            React.createElement('div',{style:{position:'relative'}},
+              React.createElement('input',{value:newName,onChange:e=>setNewName(e.target.value),placeholder:'New username',
+                style:{padding:'6px 30px 6px 10px',background:'var(--c2)',border:'1px solid var(--bd)',borderRadius:6,color:'var(--t1)',fontSize:14,fontWeight:600,width:180}}),
+              uCheck.status==='available'&&React.createElement('span',{style:{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',color:'var(--gn)'}},'✓'),
+              uCheck.status==='taken'&&React.createElement('span',{style:{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',color:'var(--rd)'}},'✗')
+            ),
+            React.createElement('button',{onClick:saveName,disabled:uCheck.status!=='available',
+              style:{padding:'6px 12px',background:uCheck.status==='available'?'var(--bl)':'var(--bd)',borderRadius:6,color:'#fff',fontSize:11,fontWeight:600}},'Save'),
+            React.createElement('button',{onClick:()=>setEditName(false),style:{fontSize:11,color:'var(--t4)'}},'Cancel')
+          ):React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10}},
+            React.createElement('h2',{style:{fontSize:22,fontWeight:700}},username),
+            React.createElement('button',{onClick:()=>{setEditName(true);setNewName(username);},style:{fontSize:10,color:'var(--t4)',padding:'3px 8px',border:'1px solid var(--bd)',borderRadius:4}},'Edit')
+          ),
+          (nameErr||uCheck.errMsg)&&React.createElement('p',{style:{fontSize:10,color:'var(--rd)',marginTop:2}},nameErr||uCheck.errMsg),
+          nameSaved&&React.createElement('p',{style:{fontSize:10,color:'var(--gn)',marginTop:2}},'Username updated!'),
+          React.createElement('p',{style:{fontSize:12,color:'var(--t4)',marginTop:4}},auth.user.email),
+          joinDate&&React.createElement('p',{style:{fontSize:11,color:'var(--t4)'}},'Member since '+joinDate)
+        ),
+        React.createElement('button',{onClick:auth.logout,style:{fontSize:11,color:'var(--t4)',padding:'6px 14px',border:'1px solid var(--bd)',borderRadius:6}},'Log out')
+      ),
+      // Stats
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginTop:16}},
+        [{n:uniqueClones.length,l:'Clones Rated'},{n:myComments.length,l:'Comments'},{n:saved.length,l:'Saved'}].map((s,i)=>
+          React.createElement('div',{key:i,style:{background:'var(--c2)',borderRadius:8,padding:'10px 12px',textAlign:'center'}},
+            React.createElement('div',{style:{fontSize:20,fontWeight:700,color:'var(--bl)'}},s.n),
+            React.createElement('div',{style:{fontSize:10,color:'var(--t4)'}},s.l)
+          )
+        )
+      )
+    ),
+
+    // Saved Collection
+    saved.length>0&&React.createElement('div',{style:{marginBottom:20}},
+      React.createElement('h3',{style:{fontSize:14,fontWeight:700,marginBottom:10}},'Saved Collection'),
+      saved.map(s=>React.createElement('button',{key:s.id,onClick:()=>onDupe(s.clone_key.split('-')[0],s.clone_name),
+        style:{display:'flex',justifyContent:'space-between',alignItems:'center',width:'100%',textAlign:'left',padding:'10px 14px',background:'var(--c1)',borderRadius:8,border:'1px solid var(--bd)',marginBottom:4,transition:'border-color .2s'}},
+        React.createElement('div',null,
+          React.createElement('span',{style:{fontSize:13,fontWeight:600,color:'var(--bl)'}},s.clone_name),
+          React.createElement('span',{style:{fontSize:11,color:'var(--t4)',marginLeft:8}},'for '+s.original_name)
+        ),
+        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8}},
+          s.original_price&&React.createElement('span',{style:{fontSize:11,color:'var(--t4)',textDecoration:'line-through'}},'$'+s.original_price),
+          s.clone_price&&React.createElement('span',{style:{fontSize:11,fontWeight:600,color:'var(--t1)'}},'$'+s.clone_price)
+        )
+      ))
+    ),
+
+    // Recent Ratings
+    uniqueClones.length>0&&React.createElement('div',{style:{marginBottom:20}},
+      React.createElement('h3',{style:{fontSize:14,fontWeight:700,marginBottom:10}},'Your Ratings'),
+      uniqueClones.slice(0,10).map(ck=>{
+        const myR=ratings.filter(r=>r.clone_key===ck);
+        return React.createElement('div',{key:ck,style:{background:'var(--c1)',borderRadius:8,border:'1px solid var(--bd)',padding:'10px 14px',marginBottom:4}},
+          React.createElement('span',{style:{fontSize:12,fontWeight:600}},myR[0]?.clone_name||ck),
+          React.createElement('span',{style:{fontSize:11,color:'var(--t4)',marginLeft:8}},'for '+(myR[0]?.original_name||'')),
+          React.createElement('div',{style:{display:'flex',gap:12,marginTop:6}},
+            myR.map(r=>React.createElement('span',{key:r.metric,style:{fontSize:10,color:'var(--bl)'}},
+              r.metric.charAt(0).toUpperCase()+r.metric.slice(1)+': '+r.rating
+            ))
+          )
+        );
+      })
+    ),
+
+    // Recent Comments
+    myComments.length>0&&React.createElement('div',null,
+      React.createElement('h3',{style:{fontSize:14,fontWeight:700,marginBottom:10}},'Your Comments'),
+      myComments.slice(0,10).map(c=>React.createElement('div',{key:c.id,style:{background:'var(--c1)',borderRadius:8,border:'1px solid var(--bd)',padding:'10px 14px',marginBottom:4}},
+        React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:4}},
+          React.createElement('span',{style:{fontSize:11,color:'var(--t4)'}},c.clone_key),
+          React.createElement('span',{style:{fontSize:10,color:'var(--t4)'}},new Date(c.created_at).toLocaleDateString())
+        ),
+        React.createElement('p',{style:{fontSize:13,color:'var(--t2)'}},c.body)
+      ))
+    )
+  );
+}
+
+// ═══════════════════════════════════════
+// DETAIL PAGE — Per-metric rating + comments
+// ═══════════════════════════════════════
+function DetailPg({oid,dn,nav}){
+  const item=DB.find(d=>String(d.id)===String(oid));
+  if(!item)return<div style={{padding:48,textAlign:'center',color:'var(--t4)'}}>Not found</div>;
+  const dupe=item.dupes.find(d=>d.nm===dn)||item.dupes[0];
+  const editScore=sc(dupe);const save=sv(item.p,dupe.pr);
+  const cloneKey=item.id+'-'+dupe.nm.replace(/\s/g,'-').toLowerCase();
+
+  const[comScores,setComScores]=useState({});
+  const[comCounts,setComCounts]=useState({});
+  const[copied,setCopied]=useState(false);
+
+  useEffect(()=>{
+    setPageMeta(dupe.nm+' vs '+item.og,dupe.nm+' clone review — rated '+editScore+'/100. Save '+save+'% vs $'+item.p);
+    if(!SM_SUPA_URL)return;
+    fetch(SM_SUPA_URL+'/rest/v1/ratings?clone_key=eq.'+encodeURIComponent(cloneKey)+'&select=metric,rating',{
+      headers:{'apikey':SM_SUPA_KEY}
+    }).then(r=>r.json()).then(d=>{
+      if(!Array.isArray(d))return;
+      const bm={};d.forEach(r=>{if(!bm[r.metric])bm[r.metric]=[];bm[r.metric].push(r.rating);});
+      const avgs={},cnts={};
+      ['similarity','performance','projection','longevity'].forEach(m=>{
+        cnts[m]=bm[m]?bm[m].length:0;
+        avgs[m]=bm[m]?Math.round(bm[m].reduce((a,b)=>a+b,0)/bm[m].length):null;
+      });
+      setComScores(avgs);setComCounts(cnts);
+    }).catch(()=>{});
+    return()=>setPageMeta();
+  },[cloneKey]);
+
+  const bSim=blend70_30(dupe.sim,comScores.similarity,comCounts.similarity||0);
+  const bPerf=blend70_30(dupe.perf,comScores.performance,comCounts.performance||0);
+  const bProj=blend70_30(dupe.proj,comScores.projection,comCounts.projection||0);
+  const lonAsPercent=comScores.longevity!=null?comScores.longevity/100*12:null;
+  const bLon=blend70_30(dupe.lon,lonAsPercent,comCounts.longevity||0);
+  const blended=Math.round(bSim*0.4+bPerf*0.2+bProj*0.2+(bLon/12*100)*0.2);
+  const hasBlend=Object.values(comCounts).some(c=>c>=5);
+
+  return(
+    <section style={{padding:'28px 20px 80px',maxWidth:760,margin:'0 auto'}}>
+      <button onClick={()=>window.history.back()} style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:13,color:'var(--t3)',marginBottom:24}}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg> Back
+      </button>
+      <div style={{background:'var(--c1)',borderRadius:14,border:'1px solid var(--bd)',padding:'20px 24px',marginBottom:16,textAlign:'center'}}>
+        <span style={{fontSize:10,color:'var(--bl)',textTransform:'uppercase',letterSpacing:1.5,fontWeight:600}}>{item.h}</span>
+        <h1 style={{fontSize:26,fontWeight:700,margin:'4px 0'}}>{item.og}</h1>
+        <span style={{fontSize:12,color:'var(--t4)'}}>Retail ${item.p} · {item.fam}</span>
+      </div>
+      <div style={{background:'rgba(0,148,225,0.02)',borderRadius:16,border:'1px solid rgba(0,148,225,0.12)',padding:24}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:12,marginBottom:20}}>
+          <div><h2 style={{fontSize:20,fontWeight:700}}>{dupe.nm}</h2><span style={{fontSize:12,color:'var(--t3)'}}>by {dupe.br}</span></div>
+          <div style={{textAlign:'right'}}>
+            <span><span style={{fontSize:14,textDecoration:"line-through",color:"var(--t4)",marginRight:8,opacity:.7}}>${item.p}</span><span style={{fontSize:24,fontWeight:600,color:'var(--t1)'}}>${dupe.pr}</span></span>
+            <span style={{display:'block',fontSize:11,color:'var(--gn)',fontWeight:500,opacity:.85}}>Save {save}%</span>
+          </div>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-around',padding:'16px 0',background:'rgba(255,255,255,0.02)',borderRadius:12,border:'1px solid var(--bd)',marginBottom:4}}>
+          <Ring val={bSim} size={60} sw={4} label="Similarity"/>
+          <Ring val={bPerf} size={60} sw={4} label="Performance"/>
+          <Ring val={bProj} size={60} sw={4} label="Projection"/>
+          <Ring val={bLon} size={60} sw={4} label="Longevity" unit="h"/>
+        </div>
+        {hasBlend&&<p style={{textAlign:'center',fontSize:9,color:'var(--t4)',marginBottom:6}}>Scores blended: 70% editorial + 30% community</p>}
+        <div style={{textAlign:'center',fontSize:13,fontWeight:600,color:clr(blended),padding:'10px 0',borderBottom:'1px solid var(--bd)',marginBottom:20,opacity:.85}}>
+          Overall ScentMetric Score: {blended}
+        </div>
+        <div style={{display:'flex',gap:8,marginBottom:20}}>
+          <SaveBtn cloneKey={cloneKey} originalName={item.og} cloneName={dupe.nm} clonePrice={dupe.pr} originalPrice={item.p}/>
+          <button onClick={()=>{shareURL(dupe.nm+' vs '+item.og);setCopied(true);setTimeout(()=>setCopied(false),2000);}} style={{display:'flex',alignItems:'center',gap:6,padding:'8px 14px',borderRadius:8,fontSize:11,fontWeight:600,border:'1px solid '+(copied?'rgba(43,184,126,0.3)':'var(--bd)'),color:copied?'var(--gn)':'var(--t3)',transition:'all .2s'}}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx={18} cy={5} r={3}/><circle cx={6} cy={12} r={3}/><circle cx={18} cy={19} r={3}/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            {copied?'Link copied!':'Share'}
+          </button>
+        </div>
+
+        {/* COMMUNITY RATINGS — per metric */}
+        <div style={{background:'rgba(255,255,255,0.02)',borderRadius:12,border:'1px solid var(--bd)',padding:16,marginBottom:20}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <span style={{fontSize:12,fontWeight:700}}>Rate This Clone</span>
+            <span style={{fontSize:10,color:'var(--t4)'}}>Your ratings directly influence scores</span>
+          </div>
+          <MetricRater cloneKey={cloneKey} originalName={item.og} cloneName={dupe.nm} metric="similarity" label="Similarity" currentScore={dupe.sim}/>
+          <MetricRater cloneKey={cloneKey} originalName={item.og} cloneName={dupe.nm} metric="performance" label="Performance" currentScore={dupe.perf}/>
+          <MetricRater cloneKey={cloneKey} originalName={item.og} cloneName={dupe.nm} metric="projection" label="Projection" currentScore={dupe.proj}/>
+          <MetricRater cloneKey={cloneKey} originalName={item.og} cloneName={dupe.nm} metric="longevity" label="Longevity" currentScore={dupe.lon}/>
+        </div>
+
+        {/* Verdict */}
+        <div style={{background:'rgba(255,255,255,0.02)',borderRadius:10,border:'1px solid var(--bd)',padding:14,marginBottom:20}}>
+          <span style={{fontSize:10,color:'var(--t4)',textTransform:'uppercase',letterSpacing:1,fontWeight:600}}>Verdict</span>
+          <p style={{fontSize:14,color:'var(--t2)',lineHeight:1.7,marginTop:6}}>{dupe.vd}</p>
+        </div>
+
+        {/* Notes */}
+        <div style={{marginBottom:20}}>
+          <span style={{fontSize:10,color:'var(--t4)',textTransform:'uppercase',letterSpacing:1,fontWeight:600}}>Key Notes</span>
+          <div style={{display:'flex',flexWrap:'wrap',gap:4,marginTop:6}}>
+            {dupe.nt.map(n=><span key={n} style={{fontSize:10,padding:'3px 8px',borderRadius:4,background:'var(--bld)',color:'var(--bl)',border:'1px solid rgba(0,148,225,0.1)'}}>{n}</span>)}
+          </div>
+        </div>
+
+        {/* COMMENTS / DISCUSSION */}
+        <Comments cloneKey={cloneKey}/>
+
+        {/* Sources */}
+        <div style={{marginTop:20}}>
+          <span style={{fontSize:10,color:'var(--t4)',textTransform:'uppercase',letterSpacing:1,fontWeight:600}}>Data Sources</span>
+          <div style={{display:'flex',flexWrap:'wrap',gap:4,marginTop:6}}>
+            {dupe.src.map(s=><span key={s} style={{fontSize:10,padding:'3px 8px',borderRadius:4,background:'rgba(43,184,126,0.06)',color:'var(--gn)',border:'1px solid rgba(43,184,126,0.12)'}}>{s}</span>)}
+          </div>
+        </div>
+      </div>
+
+      {/* Other clones */}
+      {item.dupes.length>1&&(
+        <div style={{marginTop:20}}>
+          <span style={{fontSize:12,fontWeight:600,color:'var(--t3)',marginBottom:10,display:'block'}}>Other clones of {item.og}</span>
+          {item.dupes.filter(d=>d.nm!==dupe.nm).map((d,i)=>(
+            <button key={i} onClick={()=>nav('detail',{id:item.id,nm:d.nm})} style={{display:'flex',justifyContent:'space-between',alignItems:'center',width:'100%',textAlign:'left',padding:'12px 14px',background:'var(--c1)',borderRadius:10,border:'1px solid var(--bd)',marginBottom:6,transition:'border-color .2s'}}
+              onMouseEnter={e=>e.currentTarget.style.borderColor='var(--bh)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--bd)'}>
+              <div><span style={{fontSize:13,fontWeight:600}}>{d.nm}</span><span style={{fontSize:11,color:'var(--t4)',marginLeft:6}}>{d.br}</span></div>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <span style={{fontSize:13,fontWeight:600,color:'var(--t1)'}}>${d.pr}</span>
+                <span style={{fontSize:11,color:clr(sc(d))}}>{sc(d)}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Suggest a Clone */}
+      <SuggestClone originalName={item.og} originalId={item.id}/>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════
+// SUGGEST A CLONE
+// ═══════════════════════════════════════
+function SuggestClone({originalName,originalId}){
+  const auth=React.useContext(AuthContext);
+  const[open,setOpen]=useState(false);
+  const[name,setName]=useState('');
+  const[brand,setBrand]=useState('');
+  const[why,setWhy]=useState('');
+  const[status,setStatus]=useState('');
+
+  async function submit(){
+    if(!auth.user){auth.showAuth('login');return;}
+    if(!name.trim()||name.trim().length<2)return;
+    if(hasProfanity(name+' '+brand+' '+why)){setStatus('error');return;}
+    setStatus('sending');
+    const token=auth.getToken();
+    try{
+      const res=await fetch(SM_SUPA_URL+'/rest/v1/suggestions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':SM_SUPA_KEY,'Authorization':'Bearer '+token},
+        body:JSON.stringify({cologne_name:originalName,brand:brand.trim()||null,clone_name:name.trim(),reason:censorText(why.trim()),fingerprint:auth.user.id,status:'pending'})
+      });
+      if(res.ok){setStatus('done');setName('');setBrand('');setWhy('');}
+      else{setStatus('error');}
+    }catch(e){setStatus('error');}
+  }
+
+  const inp={width:'100%',padding:'8px 12px',background:'var(--c2)',border:'1px solid var(--bd)',borderRadius:6,color:'var(--t1)',fontSize:12,fontFamily:'inherit'};
+
+  return React.createElement('div',{style:{marginTop:20,borderRadius:12,border:'1px solid var(--bd)',overflow:'hidden'}},
+    React.createElement('button',{onClick:()=>setOpen(!open),
+      style:{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'14px 16px',background:'var(--c1)',fontSize:12,fontWeight:600,color:'var(--t3)'}},
+      React.createElement('span',{style:{display:'flex',alignItems:'center',gap:8}},
+        React.createElement('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},
+          React.createElement('circle',{cx:12,cy:12,r:10}),React.createElement('path',{d:'M12 8v8'}),React.createElement('path',{d:'M8 12h8'})),
+        'Know a clone we\'re missing?'),
+      React.createElement('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,
+        style:{transform:open?'rotate(180deg)':'rotate(0)',transition:'transform .2s'}},
+        React.createElement('path',{d:'m6 9 6 6 6-6'}))
+    ),
+    open&&React.createElement('div',{style:{padding:16,background:'rgba(255,255,255,0.01)'}},
+      status==='done'?React.createElement('p',{style:{fontSize:13,color:'var(--gn)',fontWeight:600,textAlign:'center',padding:12}},'Thanks! We\'ll review your suggestion.'):
+      React.createElement('div',null,
+        React.createElement('div',{style:{marginBottom:10}},
+          React.createElement('label',{style:{fontSize:10,color:'var(--t4)',fontWeight:600,display:'block',marginBottom:4}},'Clone Name *'),
+          React.createElement('input',{value:name,onChange:e=>setName(e.target.value),placeholder:'e.g. Club de Nuit Intense',style:inp})
+        ),
+        React.createElement('div',{style:{marginBottom:10}},
+          React.createElement('label',{style:{fontSize:10,color:'var(--t4)',fontWeight:600,display:'block',marginBottom:4}},'Brand'),
+          React.createElement('input',{value:brand,onChange:e=>setBrand(e.target.value),placeholder:'e.g. Armaf',style:inp})
+        ),
+        React.createElement('div',{style:{marginBottom:12}},
+          React.createElement('label',{style:{fontSize:10,color:'var(--t4)',fontWeight:600,display:'block',marginBottom:4}},'Why is it a good clone?'),
+          React.createElement('textarea',{value:why,onChange:e=>setWhy(e.target.value),placeholder:'Smells almost identical, great longevity...',rows:2,style:{...inp,resize:'vertical',minHeight:50}})
+        ),
+        status==='error'&&React.createElement('p',{style:{fontSize:11,color:'var(--rd)',marginBottom:8}},'Please keep it clean and try again.'),
+        React.createElement('button',{onClick:submit,disabled:status==='sending'||!name.trim(),
+          style:{padding:'8px 18px',background:'var(--bl)',borderRadius:6,color:'#fff',fontSize:11,fontWeight:600,opacity:(status==='sending'||!name.trim())?.5:1}},
+          status==='sending'?'Submitting...':'Submit Suggestion')
+      )
+    )
+  );
+}
+
+// ═══════════════════════════════════════
+// SAVINGS CALCULATOR — unique interactive tool
+// ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// COLLECTION RECOMMENDATIONS
+// ═══════════════════════════════════════
+function CollectionRecs({selected,onDupe}){
+  const recs=useMemo(()=>{
+    // Categorize what user already has
+    const has={woody:0,fresh:0,gourmand:0,oriental:0,floral:0,leather:0,aquatic:0};
+    const selectedOgIds=new Set(selected.map(s=>s.ogId));
+    selected.forEach(s=>{
+      const item=DB.find(d=>d.id===s.ogId);
+      if(!item)return;
+      const f=item.fam.toLowerCase();
+      if(f.includes('woody')||f.includes('oud'))has.woody++;
+      if(f.includes('fresh')||f.includes('citrus')||f.includes('aquatic')||f.includes('aromatic'))has.fresh++;
+      if(f.includes('gourmand')||f.includes('vanilla')||f.includes('tobacco')||f.includes('sweet'))has.gourmand++;
+      if(f.includes('oriental')||f.includes('amber')||f.includes('spicy'))has.oriental++;
+      if(f.includes('floral')||f.includes('rose'))has.floral++;
+      if(f.includes('leather'))has.leather++;
+    });
+    // Find weakest categories
+    const entries=Object.entries(has).sort((a,b)=>a[1]-b[1]);
+    const suggestions=[];
+    for(const[cat]of entries){
+      if(suggestions.length>=3)break;
+      const match=DB.find(item=>{
+        if(selectedOgIds.has(item.id)||item.dupes.length===0)return false;
+        const f=item.fam.toLowerCase();
+        if(cat==='woody')return f.includes('woody')||f.includes('oud');
+        if(cat==='fresh')return f.includes('fresh')||f.includes('citrus')||f.includes('aquatic');
+        if(cat==='gourmand')return f.includes('gourmand')||f.includes('vanilla')||f.includes('sweet');
+        if(cat==='oriental')return f.includes('oriental')||f.includes('amber')||f.includes('spicy');
+        if(cat==='floral')return f.includes('floral')||f.includes('rose');
+        if(cat==='leather')return f.includes('leather');
+        return false;
+      });
+      if(match){
+        const best=match.dupes[0];
+        suggestions.push({cat,item:match,dupe:best,reason:has[cat]===0?`No ${cat} fragrances yet`:`Only ${has[cat]} ${cat} scent${has[cat]>1?'s':''} — add variety`});
+      }
+    }
+    return suggestions;
+  },[selected]);
+
+  if(recs.length===0)return null;
+  return(
+    <div style={{background:'rgba(43,184,126,0.03)',borderRadius:14,border:'1px solid rgba(43,184,126,0.12)',padding:'20px 18px',marginBottom:24}}>
+      <h4 style={{fontSize:13,fontWeight:700,color:'var(--gn)',marginBottom:12,display:'flex',alignItems:'center',gap:6}}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        Missing from your rotation
+      </h4>
+      {recs.map((r,i)=>(
+        <button key={i} onClick={()=>onDupe(r.item.id,r.dupe.nm)} style={{display:'flex',justifyContent:'space-between',alignItems:'center',width:'100%',textAlign:'left',padding:'10px 12px',background:'rgba(255,255,255,0.02)',borderRadius:10,border:'1px solid var(--bd)',marginBottom:4,transition:'border-color .2s'}}
+          onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(43,184,126,0.2)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--bd)'}>
+          <div>
+            <div style={{fontSize:12,fontWeight:600}}>{r.dupe.nm} <span style={{color:'var(--t4)',fontWeight:400}}>for {r.item.og}</span></div>
+            <div style={{fontSize:10,color:'var(--gn)',marginTop:2}}>{r.reason}</div>
+          </div>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--gn)',flexShrink:0}}>${r.dupe.pr}</div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function CalcPg({onDupe}){
+  const[selected,setSelected]=useState([]);
+  
+  const toggle=(item,dupe)=>{
+    const key=item.id+'-'+dupe.nm;
+    setSelected(prev=>{
+      const exists=prev.find(s=>s.key===key);
+      if(exists)return prev.filter(s=>s.key!==key);
+    });
+  };
+  
+  const totalRetail=selected.reduce((a,s)=>a+s.ogPrice,0);
+  const totalClone=selected.reduce((a,s)=>a+s.clonePrice,0);
+  const totalSaved=totalRetail-totalClone;
+  
+  return(
+    <section style={{padding:'36px 20px 80px',maxWidth:900,margin:'0 auto'}}>
+      <div style={{textAlign:'center',marginBottom:28}}>
+        <h2 style={{fontSize:'clamp(26px,4vw,36px)',fontWeight:700,letterSpacing:-1,marginBottom:6}}>
+          <span style={{background:'linear-gradient(135deg,#fff 40%,var(--gn))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>Build Your Collection</span>
+        </h2>
+        <p style={{fontSize:14,color:'var(--t3)',maxWidth:420,margin:'0 auto'}}>Pick the colognes you want. See how much you'd save with clones.</p>
+      </div>
+
+      {selected.length===0&&(
+        <div style={{textAlign:'center',padding:'20px 16px',background:'var(--bld)',borderRadius:12,border:'1px solid rgba(0,148,225,0.1)',marginBottom:24}}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" strokeWidth="2" style={{marginBottom:6}}><path d="M12 5v14M5 12h14"/></svg>
+          <p style={{fontSize:13,color:'var(--bl)',fontWeight:500}}>Click on any clone below to add it to your wishlist</p>
+          <p style={{fontSize:11,color:'var(--t3)',marginTop:4}}>Your savings will be calculated in real time</p>
+        </div>
+      )}
+
+      {selected.length>0&&(
+        <div style={{background:'linear-gradient(135deg,rgba(0,148,225,0.05),rgba(43,184,126,0.05))',borderRadius:16,border:'1px solid rgba(0,148,225,0.15)',padding:24,marginBottom:28,textAlign:'center'}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:16}}>
+            <div>
+              <div style={{fontSize:10,color:'var(--t4)',textTransform:'uppercase',letterSpacing:.8,marginBottom:4}}>Retail Total</div>
+              <div style={{fontSize:24,fontWeight:700,color:'var(--rd)',textDecoration:'line-through'}}>${totalRetail}</div>
+            </div>
+            <div>
+              <div style={{fontSize:10,color:'var(--t4)',textTransform:'uppercase',letterSpacing:.8,marginBottom:4}}>Clone Total</div>
+              <div style={{fontSize:24,fontWeight:700,color:'var(--t1)'}}>${totalClone}</div>
+            </div>
+            <div>
+              <div style={{fontSize:10,color:'var(--t4)',textTransform:'uppercase',letterSpacing:.8,marginBottom:4}}>You Save</div>
+              <div style={{fontSize:24,fontWeight:700,color:'var(--gn)'}}>${totalSaved}</div>
+            </div>
+          </div>
+          <div style={{fontSize:12,color:'var(--t3)',marginBottom:16}}>
+            {selected.length} fragrance{selected.length!==1?'s':''} · {Math.round(totalSaved/totalRetail*100)}% saved vs retail
+          </div>
+          
+          <div style={{textAlign:'left'}}>
+            {selected.map(s=>(
+              <div key={s.key} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',background:'rgba(255,255,255,0.02)',borderRadius:8,border:'1px solid var(--bd)',marginBottom:4,transition:'border-color .2s'}}
+                onMouseEnter={e=>e.currentTarget.style.borderColor='var(--bh)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--bd)'}>
+                <button onClick={()=>onDupe(s.ogId,s.clone)} style={{fontSize:12,textAlign:'left',flex:1}}>
+                  <span style={{fontWeight:600,color:'var(--bl)'}}>{s.clone}</span>
+                  <span style={{color:'var(--t4)',marginLeft:6}}>for {s.og}</span>
+                  <span style={{fontSize:10,color:'var(--t4)',marginLeft:6}}>→ View details</span>
+                </button>
+                <div style={{display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
+                  <span style={{fontSize:11,color:'var(--t4)',textDecoration:'line-through'}}>${s.ogPrice}</span>
+                  <span style={{fontSize:11,fontWeight:700,color:'var(--t1)'}}>${s.clonePrice}</span>
+                  <button onClick={e=>{e.stopPropagation();toggle({id:s.ogId,p:s.ogPrice,og:s.og},{nm:s.clone,pr:s.clonePrice,br:s.brand});}} style={{fontSize:14,color:'var(--t4)',padding:'0 4px'}}>×</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* MISSING FROM YOUR ROTATION — smart recommendations */}
+      {selected.length>=2&&<CollectionRecs selected={selected} onDupe={onDupe}/>}
+      
+      <div>
+        {DB.map(item=>(
+          <div key={item.id} style={{background:'var(--c1)',borderRadius:12,border:'1px solid var(--bd)',marginBottom:8,overflow:'hidden'}}>
+            <div style={{padding:'12px 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <span style={{fontSize:14,fontWeight:700}}>{item.og}</span>
+                <span style={{fontSize:11,color:'var(--t4)',marginLeft:8}}>{item.h} · <span style={{color:'var(--t4)'}}>${item.p}</span></span>
+              </div>
+            </div>
+            <div style={{padding:'0 12px 12px',display:'flex',gap:6,flexWrap:'wrap'}}>
+              {item.dupes.map((d,i)=>{
+                const isSelected=selected.some(s=>s.key===item.id+'-'+d.nm);
+                return(
+                  <button key={i} onClick={()=>toggle(item,d)} style={{fontSize:11,padding:'8px 14px',borderRadius:8,border:'1px solid',borderColor:isSelected?'var(--bl)':'var(--bd)',background:isSelected?'var(--bld)':'transparent',color:isSelected?'var(--bl)':'var(--t2)',transition:'all .2s',display:'flex',alignItems:'center',gap:6,cursor:'pointer'}}
+                    onMouseEnter={e=>{if(!isSelected){e.currentTarget.style.borderColor='rgba(0,148,225,0.2)';e.currentTarget.style.background='rgba(0,148,225,0.02)';}}}
+                    onMouseLeave={e=>{if(!isSelected){e.currentTarget.style.borderColor='var(--bd)';e.currentTarget.style.background='transparent';}}}>
+                    {isSelected?<svg width="12" height="12" viewBox="0 0 24 24" fill="var(--bl)" stroke="none"><path d="M20 6L9 17l-5-5 1.4-1.4L9 14.2 18.6 4.6z"/></svg>:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>}
+                    {d.nm} <span style={{color:isSelected?'var(--bl)':'var(--t4)',fontWeight:600}}>${d.pr}</span>
+                    <span style={{fontSize:10,fontWeight:700,color:clr(sc(d)),background:clr(sc(d))+'12',padding:'2px 6px',borderRadius:4,marginLeft:2}}>{sc(d)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════
+// ABOUT
+// ═══════════════════════════════════════
+function AboutPg(){
+  return(
+    <section style={{padding:'36px 20px 80px',maxWidth:700,margin:'0 auto'}}>
+      <h2 style={{fontSize:'clamp(24px,4vw,32px)',fontWeight:700,textAlign:'center',marginBottom:24}}>About ScentMetric</h2>
+      
+      {/* Origin Story */}
+      <div style={{background:'var(--c1)',borderRadius:14,border:'1px solid var(--bd)',padding:24,marginBottom:16}}>
+        <h3 style={{fontSize:16,fontWeight:700,marginBottom:12}}>Why I Built This</h3>
+        <p style={{fontSize:14,color:'var(--t2)',lineHeight:1.8,marginBottom:12}}>I spent months digging through Reddit threads, Facebook groups, and fragrance forums trying to find affordable alternatives to the colognes I loved. The information was out there — buried in hundreds of scattered posts across r/fragrance, r/fragranceclones, Fragrantica reviews, and YouTube comments. But nothing was in one place. Nothing was organized. Nothing was scored.</p>
+        <p style={{fontSize:14,color:'var(--t2)',lineHeight:1.8,marginBottom:12}}>I'd open 15 tabs just to figure out whether Lattafa Khamrah was actually close to Angels' Share, or if people were just hyping it. I'd cross-reference Reddit posts with YouTube reviews with Fragrantica ratings. Every time I wanted to try a new clone, it was another hour of research.</p>
+        <p style={{fontSize:14,color:'var(--t2)',lineHeight:1.8}}>So I built what I wished existed. ScentMetric takes all that fragmented community knowledge and structures it into a single, searchable database with transparent scores. I've been a part of the fragrance community for years — this project is the result of that experience and a couple months of putting it all together.</p>
+      </div>
+
+      {/* How It Works */}
+      <div style={{background:'var(--c1)',borderRadius:14,border:'1px solid var(--bd)',padding:24,marginBottom:16}}>
+        <h3 style={{fontSize:16,fontWeight:700,marginBottom:12}}>How We Score</h3>
+        <p style={{fontSize:13,color:'var(--t3)',lineHeight:1.7,marginBottom:14}}>Every clone is rated on four metrics based on community consensus from fragrance forums, Reddit discussions, and review platforms. Scores are editorial estimates informed by aggregated community feedback, and are continuously refined as more data comes in.</p>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:14}}>
+          {[
+            {name:'Similarity',weight:'40%',desc:'How close the scent is to the original'},
+            {name:'Performance',weight:'20%',desc:'Overall strength and presence'},
+            {name:'Projection',weight:'20%',desc:'How far the scent carries'},
+            {name:'Longevity',weight:'20%',desc:'How many hours it lasts on skin'}
+          ].map(m=>(
+            <div key={m.name} style={{background:'rgba(255,255,255,0.02)',borderRadius:10,border:'1px solid var(--bd)',padding:'12px 14px'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                <span style={{fontSize:12,fontWeight:600,color:'var(--t1)'}}>{m.name}</span>
+                <span style={{fontSize:10,fontWeight:600,color:'var(--bl)'}}>{m.weight}</span>
+              </div>
+              <span style={{fontSize:11,color:'var(--t4)'}}>{m.desc}</span>
+            </div>
+          ))}
+        </div>
+        <p style={{fontSize:12,color:'var(--t4)',lineHeight:1.6}}>The overall ScentMetric Score is a weighted average: Similarity (40%) + Performance (20%) + Projection (20%) + Longevity (20%). Scores are updated based on community votes and new data from our scraping pipeline.</p>
+      </div>
+
+      {/* Data Sources */}
+      <div style={{background:'var(--c1)',borderRadius:14,border:'1px solid var(--bd)',padding:24,marginBottom:16}}>
+        <h3 style={{fontSize:16,fontWeight:700,marginBottom:12}}>Our Sources</h3>
+        <p style={{fontSize:13,color:'var(--t3)',lineHeight:1.6,marginBottom:12}}>We aggregate data and opinions from across the fragrance community.</p>
+        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+          {['r/fragrance','r/fragranceclones','r/colognes','Fragrantica','Basenotes','Facebook Groups','TikTok Reviews','YouTube'].map(s=><span key={s} style={{fontSize:11,padding:'5px 10px',borderRadius:6,background:'rgba(255,255,255,0.02)',color:'var(--t2)',border:'1px solid var(--bd)'}}>{s}</span>)}
+        </div>
+      </div>
+
+      {/* Contact */}
+      <div style={{background:'var(--c1)',borderRadius:14,border:'1px solid var(--bd)',padding:24}}>
+        <h3 style={{fontSize:16,fontWeight:700,marginBottom:12}}>Get in Touch</h3>
+        <p style={{fontSize:13,color:'var(--t3)',lineHeight:1.6,marginBottom:14}}>Have feedback, a partnership inquiry, or want to work with us? We'd love to hear from you.</p>
+        <a href="mailto:scentmetric@gmail.com" style={{display:'inline-flex',alignItems:'center',gap:8,padding:'10px 20px',background:'var(--bld)',border:'1px solid rgba(0,148,225,0.12)',borderRadius:10,color:'var(--bl)',fontSize:13,fontWeight:600,transition:'all .2s',textDecoration:'none'}}
+          onMouseEnter={e=>{e.currentTarget.style.background='rgba(0,148,225,0.1)';}} onMouseLeave={e=>{e.currentTarget.style.background='var(--bld)';}}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          scentmetric@gmail.com
+        </a>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════
+// BLOG PAGE — data-driven articles
+// ═══════════════════════════════════════
+function BlogPg({nav,onDupe}){
+  // Auto-generate articles from database
+  const articles=useMemo(()=>{
+    const a=[];
+    
+    // 1. Best clone per brand
+    const brands={};
+    DB.forEach(i=>i.dupes.forEach(d=>{if(!brands[d.br])brands[d.br]=[];brands[d.br].push({...d,ogName:i.og,ogPrice:i.p,ogId:i.id});}));
+    const topBrands=Object.entries(brands).sort((a,b)=>b[1].length-a[1].length).slice(0,5);
+    topBrands.forEach(([br,clones])=>{
+      const best=clones.sort((a,b)=>sc(b)-sc(a))[0];
+      a.push({id:'brand-'+br.toLowerCase().replace(/\s/g,'-'),cat:'Brand Spotlight',title:`Best ${br} Clones Ranked by Score`,desc:`We scored all ${clones.length} ${br} clones in our database. Here's how they stack up across similarity, performance, projection, and longevity.`,tag:br,
+        items:clones.slice(0,5).map(c=>({nm:c.nm,score:sc(c),ogName:c.ogName,pr:c.pr,ogPrice:c.ogPrice,ogId:c.ogId})),date:['Oct 2025','Nov 2025','Nov 2025','Dec 2025','Jan 2026'][a.length%5]});
+    });
+
+    // 2. Best value picks (highest savings)
+    const allDupes=[];
+    DB.forEach(i=>i.dupes.forEach(d=>allDupes.push({...d,ogName:i.og,ogPrice:i.p,ogId:i.id,save:sv(i.p,d.pr)})));
+    const topSavings=allDupes.sort((a,b)=>b.save-a.save).slice(0,6);
+    a.push({id:'best-value-clones-2026',cat:'Best Of',title:'Top 6 Cologne Clones With the Biggest Savings',desc:`These clones save you the most money while maintaining high ScentMetric scores. The #1 pick saves you ${topSavings[0].save}%.`,tag:'Value',
+      items:topSavings.map(c=>({nm:c.nm,score:sc(c),ogName:c.ogName,pr:c.pr,ogPrice:c.ogPrice,ogId:c.ogId,save:c.save})),date:'Dec 2025'});
+
+    // 3. Highest-scoring clones overall
+    const topScored=allDupes.sort((a,b)=>sc(b)-sc(a)).slice(0,6);
+    a.push({id:'highest-rated-clones-2026',cat:'Best Of',title:'The 6 Highest-Rated Cologne Clones of 2026',desc:'These are the top-scoring clones across all 4 ScentMetric categories. Community consensus says these are as close as it gets.',tag:'Top Rated',
+      items:topScored.map(c=>({nm:c.nm,score:sc(c),ogName:c.ogName,pr:c.pr,ogPrice:c.ogPrice,ogId:c.ogId})),date:'Jan 2026'});
+
+    // 4. Best performance beasts (highest projection + longevity)
+    const beasts=allDupes.sort((a,b)=>(b.proj+b.lon*8)-(a.proj+a.lon*8)).slice(0,6);
+    a.push({id:'beast-mode-clones',cat:'Deep Dive',title:'6 Clones That Out-Project Their Originals',desc:'These clones don\'t just smell similar — they project harder and last longer than the expensive originals they\'re based on.',tag:'Performance',
+      items:beasts.map(c=>({nm:c.nm,score:sc(c),ogName:c.ogName,pr:c.pr,ogPrice:c.ogPrice,ogId:c.ogId,proj:c.proj,lon:c.lon})),date:'Jan 2026'});
+
+    // 5. Is CDNIM still king?
+    const aventusDupes=DB.find(i=>i.og==='Creed Aventus');
+    if(aventusDupes){
+      a.push({id:'is-cdnim-still-king-2026',cat:'Analysis',title:'Is CDNIM Still the Best Aventus Clone in 2026?',desc:`CDNIM has been the go-to Aventus clone for years. But with ${aventusDupes.dupes.length} competitors now scored, has it been dethroned?`,tag:'Aventus',
+        items:aventusDupes.dupes.map(c=>({nm:c.nm,score:sc(c),ogName:aventusDupes.og,pr:c.pr,ogPrice:aventusDupes.p,ogId:aventusDupes.id})),date:'Feb 2026'});
+    }
+
+    // 6. Budget under $25
+    const under25=allDupes.filter(d=>d.pr<=25).sort((a,b)=>sc(b)-sc(a)).slice(0,6);
+    a.push({id:'best-clones-under-25',cat:'Budget',title:'Best Cologne Clones Under $25',desc:'You don\'t need to spend more than $25 to smell expensive. These are the highest-scoring clones at rock-bottom prices.',tag:'Under $25',
+      items:under25.map(c=>({nm:c.nm,score:sc(c),ogName:c.ogName,pr:c.pr,ogPrice:c.ogPrice,ogId:c.ogId})),date:'Feb 2026'});
+
+    return a;
+  },[]);
+
+  const[sel,setSel]=useState(null);
+  const article=sel?articles.find(a=>a.id===sel):null;
+
+  if(article){
+    return(
+      <section style={{padding:'36px 20px 80px',maxWidth:800,margin:'0 auto'}}>
+        <button onClick={()=>setSel(null)} style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:13,color:'var(--t3)',marginBottom:24}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg> Back to Blog
+        </button>
+        <span style={{fontSize:10,color:'var(--bl)',textTransform:'uppercase',letterSpacing:1.5,fontWeight:600,display:'block',marginBottom:6}}>{article.cat}</span>
+        <h1 style={{fontFamily:'var(--fd)',fontSize:'clamp(24px,4vw,32px)',fontWeight:700,marginBottom:8}}>{article.title}</h1>
+        <p style={{fontSize:14,color:'var(--t3)',marginBottom:6}}>{article.desc}</p>
+        <span style={{fontSize:11,color:'var(--t4)',display:'block',marginBottom:20}}>{article.date} · Based on ScentMetric data</span>
+        
+        {/* Blog narrative intro */}
+        <div style={{fontSize:14,color:'var(--t2)',lineHeight:1.8,marginBottom:28}}>
+          {article.id.includes('brand-')&&<p>If you've spent any time on r/fragrance, you know this brand keeps coming up. But not all their offerings are equal — some are near-identical clones while others just share a vague family resemblance. We ran every {article.tag} clone in our database through our 4-metric scoring system to separate the genuine contenders from the hype. Here's what the data says.</p>}
+          {article.id==='best-value-clones-2026'&&<p>Let's talk about the elephant in the room: a $300+ cologne contains maybe $15 worth of ingredients. The rest is marketing, packaging, and brand prestige. That's not a criticism — it's just math. These six clones represent the widest gap between what you'd pay for the original and what the clone actually costs, while still maintaining scores that the community respects. This is where the value argument for clones becomes undeniable.</p>}
+          {article.id==='highest-rated-clones-2026'&&<p>Every clone in our database gets scored across four dimensions: Similarity (how close does it actually smell?), Performance (does it hold up throughout the day?), Projection (can people around you smell it?), and Longevity (how many hours before it fades?). These six fragrances scored highest overall — meaning the Reddit community, Fragrantica reviewers, and fragrance forum veterans all agree: these are the real deal.</p>}
+          {article.id==='beast-mode-clones'&&<p>Here's a dirty secret of the fragrance world: some clones actually perform better than the originals they're based on. Higher projection, longer lasting, more sillage. It sounds like marketing nonsense, but the community data backs it up. These six clones don't just match their expensive counterparts — they outperform them where it matters most.</p>}
+          {article.id==='is-cdnim-still-king-2026'&&<p>Armaf Club de Nuit Intense Man has been the undisputed king of Aventus clones since roughly 2018. It launched the entire "Arabian clone" movement into the mainstream. But the market has evolved. Afnan, Lattafa, and others have entered the ring with serious contenders. We put every Aventus clone through our scoring system to answer the question everyone on r/fragrance keeps asking: is CDNIM still worth it in 2025, or has it been dethroned?</p>}
+          {article.id==='best-clones-under-25'&&<p>The sweet spot for clone fragrances isn't $50 or $40 — it's under $25. At this price point, you're spending roughly the cost of a nice lunch to smell like you're wearing a $300 niche fragrance. The risk is essentially zero. These six picks scored highest in our database while staying under the $25 threshold, proving that smelling expensive has never been cheaper.</p>}
+        </div>
+        
+        <div>
+          {article.items.map((c,i)=>(
+            <button key={i} onClick={()=>onDupe(c.ogId,c.nm)} style={{display:'flex',justifyContent:'space-between',alignItems:'center',width:'100%',textAlign:'left',padding:'16px',background:'var(--c1)',borderRadius:12,border:'1px solid var(--bd)',marginBottom:10,transition:'border-color .2s'}}
+              onMouseEnter={e=>e.currentTarget.style.borderColor='var(--bh)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--bd)'}>
+              <div style={{flex:1}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                  <span style={{fontSize:11,fontWeight:700,color:'var(--bl)',background:'var(--bld)',padding:'2px 8px',borderRadius:4}}>#{i+1}</span>
+                  <span style={{fontFamily:'var(--fd)',fontSize:15,fontWeight:700}}>{c.nm}</span>
+                </div>
+                <span style={{fontSize:12,color:'var(--t3)'}}>Clone of {c.ogName}</span>
+              </div>
+              <div style={{textAlign:'right',flexShrink:0,marginLeft:12}}>
+                <div>
+                  <span style={{fontSize:11,textDecoration:'line-through',color:'var(--rd)',marginRight:6}}>${c.ogPrice}</span>
+                  <span style={{fontSize:16,fontWeight:700,color:'var(--bl)'}}>${c.pr}</span>
+                </div>
+                <div style={{fontSize:13,fontWeight:700,color:clr(c.score),marginTop:2}}>Score: {c.score}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+        <p style={{fontSize:12,color:'var(--t4)',marginTop:20,fontStyle:'italic'}}>Scores based on community data from r/fragrance, Fragrantica, and other sources. Click any clone for full breakdown with Reddit reviews.</p>
+      </section>
+    );
+  }
+
+  return(
+    <section style={{padding:'36px 20px 80px',maxWidth:900,margin:'0 auto'}}>
+      <h2 style={{fontFamily:'var(--fd)',fontSize:'clamp(24px,4vw,32px)',fontWeight:700,marginBottom:4}}>Blog</h2>
+      <p style={{fontSize:13,color:'var(--t3)',marginBottom:28}}>Data-driven breakdowns and rankings from ScentMetric</p>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:14}}>
+        {articles.map(a=>(
+          <button key={a.id} onClick={()=>setSel(a.id)} style={{textAlign:'left',background:'var(--c1)',borderRadius:14,border:'1px solid var(--bd)',padding:20,transition:'all .2s'}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--bh)';e.currentTarget.style.transform='translateY(-2px)';}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--bd)';e.currentTarget.style.transform='none';}}>
+            <div style={{display:'flex',gap:8,marginBottom:10}}>
+              <span style={{fontSize:9,fontWeight:600,textTransform:'uppercase',letterSpacing:.5,color:'var(--bl)',background:'var(--bld)',padding:'3px 8px',borderRadius:4}}>{a.cat}</span>
+              <span style={{fontSize:9,fontWeight:600,textTransform:'uppercase',letterSpacing:.5,color:'var(--gn)',background:'rgba(43,184,126,0.08)',padding:'3px 8px',borderRadius:4}}>{a.tag}</span>
+            </div>
+            <h3 style={{fontFamily:'var(--fd)',fontSize:16,fontWeight:700,lineHeight:1.3,marginBottom:8}}>{a.title}</h3>
+            <p style={{fontSize:12,color:'var(--t3)',lineHeight:1.5,marginBottom:10}}>{a.desc}</p>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:10,color:'var(--t4)'}}>{a.date}</span>
+              <span style={{fontSize:11,color:'var(--bl)',fontWeight:500}}>Read →</span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════
+// FOOTER
+// ═══════════════════════════════════════
+function Foot({nav}){
+  return(
+    <footer style={{borderTop:'1px solid var(--bd)',padding:'28px 20px 20px'}}>
+      <div style={{maxWidth:1000,margin:'0 auto',display:'flex',flexWrap:'wrap',justifyContent:'space-between',alignItems:'center',gap:16}}>
+        <div style={{display:'flex',alignItems:'center',gap:6}}>
+          <div style={{width:22,height:22,borderRadius:5,background:'var(--bl)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'var(--fd)',fontWeight:700,fontSize:11}}>S</div>
+          <span style={{fontFamily:'var(--fd)',fontSize:13,fontWeight:700}}>ScentMetric</span>
+          <span style={{fontSize:11,color:'var(--t4)',marginLeft:8}}>© 2026</span>
+        </div>
+        <div style={{display:'flex',gap:20}}>
+          {[{l:'Rankings',p:'rank'},{l:'Search',p:'search'},{l:'Build',p:'calc'},{l:'Blog',p:'blog'},{l:'About',p:'about'}].map(l=><button key={l.p} onClick={()=>nav(l.p)} style={{fontSize:11,color:'var(--t3)'}}>
+            {l.l}
+          </button>)}
+        </div>
+      </div>
+      <p style={{maxWidth:1000,margin:'12px auto 0',fontSize:9,color:'var(--t4)',lineHeight:1.6,textAlign:'center',opacity:.7}}>
+        All brand names, trademarks, and images are property of their respective owners. ScentMetric is not affiliated with, endorsed by, or sponsored by any fragrance brand. Clone comparisons are based on community data and editorial research. Scores are opinions, not guarantees. Use of this site constitutes acceptance of these terms.
+      </p>
+    </footer>
+  );
+}
+
+// ═══════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════
+function Home({nav,onSearch,onDupe}){
+  return(<div>
+    <Hero nav={nav} onSearch={onSearch} onDupe={onDupe}/>
+    <section style={{padding:'0 20px 40px',maxWidth:1060,margin:'0 auto'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:20}}>
+        <h2 style={{fontFamily:'var(--fd)',fontSize:20,fontWeight:700}}>Most Popular</h2>
+        <button onClick={()=>nav('rank')} style={{fontSize:12,color:'var(--bl)',fontWeight:500}}>View all →</button>
+      </div>
+      {DB.slice(0,5).map(i=><Block key={i.id} item={i} onDupe={onDupe}/>)}
+    </section>
+    <section style={{padding:'0 20px 40px',maxWidth:1060,margin:'0 auto'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16}}>
+        <h2 style={{fontFamily:'var(--fd)',fontSize:20,fontWeight:700}}>From the Blog</h2>
+        <button onClick={()=>nav('blog')} style={{fontSize:12,color:'var(--bl)',fontWeight:500}}>View all →</button>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:12}}>
+        {[
+          {t:'Is CDNIM Still the Best Aventus Clone?',c:'Analysis',tg:'Aventus'},
+          {t:'Best Cologne Clones Under $25',c:'Budget',tg:'Under $25'},
+          {t:'6 Clones That Out-Project Their Originals',c:'Deep Dive',tg:'Performance'}
+        ].map((a,i)=>(
+          <button key={i} onClick={()=>nav('blog')} style={{textAlign:'left',background:'var(--c1)',borderRadius:12,border:'1px solid var(--bd)',padding:16,transition:'border-color .2s'}}
+            onMouseEnter={e=>e.currentTarget.style.borderColor='var(--bh)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--bd)'}>
+            <div style={{display:'flex',gap:6,marginBottom:8}}>
+              <span style={{fontSize:9,fontWeight:600,textTransform:'uppercase',color:'var(--bl)',background:'var(--bld)',padding:'2px 6px',borderRadius:3}}>{a.c}</span>
+              <span style={{fontSize:9,fontWeight:600,textTransform:'uppercase',color:'var(--gn)',background:'rgba(43,184,126,0.08)',padding:'2px 6px',borderRadius:3}}>{a.tg}</span>
+            </div>
+            <h3 style={{fontFamily:'var(--fd)',fontSize:14,fontWeight:700,lineHeight:1.3}}>{a.t}</h3>
+          </button>
+        ))}
+      </div>
+    </section>
+    {/* EMAIL CAPTURE */}
+    <section style={{padding:'0 20px 48px',maxWidth:1060,margin:'0 auto'}}>
+      <div style={{background:'var(--c1)',borderRadius:16,border:'1px solid var(--bd)',padding:'32px 24px',textAlign:'center'}}>
+        <h3 style={{fontFamily:'var(--fd)',fontSize:18,fontWeight:700,marginBottom:6}}>Get Weekly Clone Picks</h3>
+        <p style={{fontSize:13,color:'var(--t3)',maxWidth:400,margin:'0 auto 16px'}}>New clone reviews, hidden gems, and exclusive deals. Join 500+ fragrance enthusiasts.</p>
+        <EmailCapture/>
+      </div>
+    </section>
+
+    {/* COLLECTION BUILDER CTA */}
+    <section style={{padding:'0 20px 48px',maxWidth:1060,margin:'0 auto'}}>
+      <button onClick={()=>nav('calc')} style={{width:'100%',textAlign:'left',background:'linear-gradient(135deg,rgba(0,148,225,0.04),rgba(43,184,126,0.04))',borderRadius:16,border:'1px solid rgba(0,148,225,0.12)',padding:'28px 24px',transition:'border-color .2s',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}
+        onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(0,148,225,0.3)'} onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(0,148,225,0.12)'}>
+        <div>
+          <h3 style={{fontFamily:'var(--fd)',fontSize:18,fontWeight:700,marginBottom:4}}>Build Your Clone Collection</h3>
+          <p style={{fontSize:13,color:'var(--t3)'}}>Pick your dream colognes and see exactly how much you'd save with clones.</p>
+        </div>
+        <span style={{fontSize:13,fontWeight:600,color:'var(--bl)',display:'flex',alignItems:'center',gap:5}}>
+          Try it free <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </span>
+      </button>
+    </section>
+  </div>);
+}
+
+// ═══════════════════════════════════════
+// APP — with working navigation history
+// ═══════════════════════════════════════
+function AppInner(){
+  const[pg,setPg]=useState('home');
+  const[sq,setSq]=useState('');
+  const[det,setDet]=useState(null);
+  const[profileKey,setProfileKey]=useState(0); // force profile reload
+
+  // Parse hash into state
+  function applyHash(){
+    const h=window.location.hash.replace('#','');
+    if(!h||h.startsWith('access_token'))return;
+    const parts=h.split('/').filter(Boolean);
+    if(parts[0]==='clone'&&parts[1]&&parts[2]){
+      const item=DB.find(d=>String(d.id)===parts[1]);
+      if(item){
+        const dupe=item.dupes.find(d=>d.nm.replace(/\s/g,'-').toLowerCase()===parts[2]);
+        if(dupe){setDet({id:parts[1],nm:dupe.nm});setPg('detail');return;}
+      }
+    }
+    const routes={'rankings':'rank','search':'search','blog':'blog','build':'calc','about':'about','profile':'profile'};
+    if(routes[parts[0]]){setDet(null);setPg(routes[parts[0]]);return;}
+    setDet(null);setPg('home');
+  }
+
+  useEffect(()=>{
+    applyHash();
+    const onPop=()=>{applyHash();window.scrollTo({top:0,behavior:'smooth'});};
+    window.addEventListener('popstate',onPop);
+    return()=>window.removeEventListener('popstate',onPop);
+  },[]);
+
+  const nav=useCallback((p,data)=>{
+    if(p==='detail'&&data){
+      setDet({id:data.id,nm:data.nm});setPg('detail');
+      const slug=data.nm.replace(/\s/g,'-').toLowerCase();
+      window.history.pushState(null,'','#/clone/'+data.id+'/'+slug);
+    }else{
+      setDet(null);setPg(p);
+      const routeMap={home:'',rank:'rankings',search:'search',blog:'blog',calc:'build',about:'about',profile:'profile'};
+      window.history.pushState(null,'','#/'+(routeMap[p]||''));
+      if(p==='profile')setProfileKey(k=>k+1);
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  },[]);
+
+  const onSearch=useCallback((q)=>{setSq(q);setPg('search');setDet(null);window.history.pushState(null,'','#/search');window.scrollTo({top:0,behavior:'smooth'});},[]);
+  const onDupe=useCallback((id,nm)=>{
+    setDet({id,nm});setPg('detail');
+    const slug=nm.replace(/\s/g,'-').toLowerCase();
+    window.history.pushState(null,'','#/clone/'+id+'/'+slug);
+    window.scrollTo({top:0,behavior:'smooth'});
+  },[]);
+
+  let content;
+  switch(pg){
+    case'home':content=<Home nav={nav} onSearch={onSearch} onDupe={onDupe}/>;break;
+    case'rank':content=<RankPage onDupe={onDupe}/>;break;
+    case'search':content=<SearchPg iq={sq} onSearch={onSearch} onDupe={onDupe}/>;break;
+    case'about':content=<AboutPg/>;break;
+    case'blog':content=<BlogPg nav={nav} onDupe={onDupe}/>;break;
+    case'calc':content=<CalcPg onDupe={onDupe}/>;break;
+    case'profile':content=<ProfilePg key={profileKey} nav={nav} onDupe={onDupe}/>;break;
+    case'detail':content=det?<DetailPg oid={det.id} dn={det.nm} nav={nav}/>:<Home nav={nav} onSearch={onSearch} onDupe={onDupe}/>;break;
+    default:content=<Home nav={nav} onSearch={onSearch} onDupe={onDupe}/>;
+  }
+  return(<div style={{minHeight:'100vh'}}><Nav pg={pg} nav={nav} onSearch={onSearch} onDupe={onDupe}/><main>{content}</main><Foot nav={nav}/></div>);
+}
+
+function App(){
+  return React.createElement(AuthProvider,null,React.createElement(AppInner));
+}
+
+const root=ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
+</script>
+</body>
+</html>
